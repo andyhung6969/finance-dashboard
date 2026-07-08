@@ -1,12 +1,22 @@
-# FIRE OS 2.0
+# FIRE OS 2.1
 
-Personal Wealth Operating System with Firebase Google Login and Firestore sync.
+新增內容：
 
-Upload these files to the root of your GitHub Pages repository:
+- PWA 支援：可在手機或桌面安裝成 App。
+- Service Worker：快取核心檔案，提升載入速度，基本離線可開啟。
+- Firebase Google Login + Firestore 雲端同步維持不變。
+- Dashboard、Assets、Investments、Cashflow、FIRE、Journal、AI Coach 維持 2.0 功能。
+
+## 上傳到 GitHub Pages
+
+把以下檔案放到 repository 根目錄：
 
 - index.html
 - manifest.json
-- assets/css/style.css
-- assets/js/app.js
+- service-worker.js
+- assets/
+- README.md
 
-Firebase is already configured for project `fire-dashboard-86bb9`.
+Firebase Authentication 的授權網域請保留：
+
+- andyhung6969.github.io

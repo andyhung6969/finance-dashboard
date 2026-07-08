@@ -4,6 +4,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
 
 const firebaseConfig = { apiKey:"AIzaSyB5jUo6VmTNTRtCfwWhkwwXLYv1dcTSSi4", authDomain:"fire-dashboard-86bb9.firebaseapp.com", projectId:"fire-dashboard-86bb9", storageBucket:"fire-dashboard-86bb9.firebasestorage.app", messagingSenderId:"153073679515", appId:"1:153073679515:web:f49de492d1e79109fd1a3e", measurementId:"G-T34VDEFP7J" };
 const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app); const provider = new GoogleAuthProvider();
+let deferredInstallPrompt = null;
 let user=null, state=null, charts={};
 const $=id=>document.getElementById(id);
 const fmt=n=>"NT$"+Math.round(Number(n)||0).toLocaleString("zh-TW");
@@ -27,5 +28,28 @@ function chart(key,el,type,data,options={}){if(charts[key])charts[key].destroy()
 function renderCharts(){if(!$('assetChart'))return;const labels=[...state.assets.map(x=>x.name),...state.investments.map(x=>x.symbol)],data=[...state.assets.map(x=>raw(x.amount)),...state.investments.map(x=>raw(x.value))];chart("asset","assetChart","doughnut",{labels,datasets:[{data}]});chart("nw","netWorthChart","line",{labels:state.history.map(x=>x.month),datasets:[{label:"Net Worth",data:state.history.map(x=>x.netWorth),tension:.35}]},{scales:{y:{beginAtZero:false}}})}
 function openEdit(kind,id){const dialog=$("editDialog"), fields=$("dialogFields");let arr=state[kind+"s"]||state[kind]; let item=id?arr.find(x=>x.id===id):{id:crypto.randomUUID()};const configs={asset:[["name","名稱"],["type","類型"],["amount","金額"]],liability:[["name","名稱"],["amount","金額"]],income:[["name","名稱"],["amount","金額"]],expense:[["name","名稱"],["amount","金額"]],investment:[["symbol","代號"],["name","名稱"],["cost","成本"],["value","現值"],["dividend","股息"]],journal:[["date","日期"],["title","標題"],["amount","金額"],["note","備註"]]};$("dialogTitle").textContent=(id?"編輯":"新增")+" "+kind;fields.innerHTML=configs[kind].map(([k,l])=>`<label>${l}</label><input name="${k}" value="${item[k]??""}">`).join("");dialog.showModal();$("editForm").onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target);configs[kind].forEach(([k])=>item[k]=fd.get(k));["amount","cost","value","dividend"].forEach(k=>{if(item[k]!=null)item[k]=raw(item[k])});if(!id)arr.unshift(item);await saveData();dialog.close();renderAll();}}
 function add(kind){openEdit(kind,null)}
+
+function setupPWA(){
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./service-worker.js').catch(console.warn);
+  }
+  window.addEventListener('beforeinstallprompt', event => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    const btn = $('installBtn');
+    if (btn) btn.classList.remove('hidden');
+  });
+  const installBtn = $('installBtn');
+  if (installBtn) {
+    installBtn.onclick = async () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      installBtn.classList.add('hidden');
+    };
+  }
+}
+
 function bind(){document.querySelectorAll(".nav").forEach(b=>b.onclick=()=>{document.querySelectorAll(".nav").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".page").forEach(x=>x.classList.remove("active-page"));b.classList.add("active");$(b.dataset.page).classList.add("active-page");$("pageTitle").textContent=b.textContent.replace(/[🏠💰📈💵🎯📅🤖⚙️]/g,"").trim();renderCharts();});$("googleLoginBtn").onclick=()=>signInWithPopup(auth,provider);$("logoutBtn").onclick=()=>signOut(auth);$("saveBtn").onclick=async()=>{await saveData();alert("已同步到 Firestore")};$("addAssetBtn").onclick=()=>add("asset");$("addInvestmentBtn").onclick=()=>add("investment");$("addIncomeBtn").onclick=()=>add("income");$("addExpenseBtn").onclick=()=>add("expense");$("addJournalBtn").onclick=()=>add("journal");$("fireGoalInput").oninput=e=>{state.fire.goal=raw(e.target.value);e.target.value=nf(state.fire.goal);renderAll();saveData()};$("monthlyInvestInput").oninput=e=>{state.fire.monthlyInvestment=raw(e.target.value);e.target.value=nf(state.fire.monthlyInvestment);renderAll();saveData()};$("returnInput").oninput=e=>{state.fire.annualReturn=raw(e.target.value);renderAll();saveData()};$("displayNameInput").oninput=e=>{state.settings.displayName=e.target.value;renderUser();saveData()};$("emergencyMonthsInput").oninput=e=>{state.settings.emergencyMonths=raw(e.target.value);renderAI();saveData()};$("resetDemoBtn").onclick=async()=>{if(confirm("確定重置成示範資料？")){state=clone(defaultData);state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};await saveData();renderAll();}}}
-bind();onAuthStateChanged(auth,async u=>{user=u;if(u){$("loginView").classList.add("hidden");$("appView").classList.remove("hidden");await loadData();}else{$("loginView").classList.remove("hidden");$("appView").classList.add("hidden");}});
+bind();setupPWA();onAuthStateChanged(auth,async u=>{user=u;if(u){$("loginView").classList.add("hidden");$("appView").classList.remove("hidden");await loadData();}else{$("loginView").classList.remove("hidden");$("appView").classList.add("hidden");}});
