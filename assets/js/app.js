@@ -1,284 +1,31 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, addDoc, getDocs, deleteDoc as deleteFirestoreDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyB5jUo6VmTNTRtCfwWhkwwXLYv1dcTSSi4",
-  authDomain: "fire-dashboard-86bb9.firebaseapp.com",
-  projectId: "fire-dashboard-86bb9",
-  storageBucket: "fire-dashboard-86bb9.firebasestorage.app",
-  messagingSenderId: "153073679515",
-  appId: "1:153073679515:web:f49de492d1e79109fd1a3e",
-  measurementId: "G-T34VDEFP7J"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
-
-let currentUser = null;
-let records = [];
-let charts = {};
-
-const moneyIds = ["assetStocks","assetCash","assetRealEstate","assetOther","debtMortgage","debtLoan","debtCar","debtCreditCard","incomeSalary","incomeRent","incomeDividend","incomeOther","expenseLiving","expenseHousing","expenseOther","fireTarget","monthlyInvestment","recordAssets","recordDebt","recordIncome","recordExpense"];
-const dashboardIds = moneyIds.filter(id => !id.startsWith("record")).concat(["annualReturn"]);
-
-const $ = id => document.getElementById(id);
-const moneyValue = v => Number(String(v || "").replace(/,/g, "").replace(/[^\d.-]/g, "")) || 0;
-const num = id => moneyValue($(id)?.value);
-const money = v => "NT$" + Math.round(v).toLocaleString("zh-TW");
-const plain = v => Math.round(v).toLocaleString("zh-TW");
-const setText = (id, text) => { if ($(id)) $(id).textContent = text; };
-
-function formatMoneyInput(input){
-  const raw = input.value.replace(/,/g, "").replace(/[^\d]/g, "");
-  input.value = raw === "" ? "" : Number(raw).toLocaleString("zh-TW");
-}
-
-function snapshot(){
-  const totalAssets = num("assetStocks") + num("assetCash") + num("assetRealEstate") + num("assetOther");
-  const totalDebt = num("debtMortgage") + num("debtLoan") + num("debtCar") + num("debtCreditCard");
-  const totalIncome = num("incomeSalary") + num("incomeRent") + num("incomeDividend") + num("incomeOther");
-  const totalExpense = num("expenseLiving") + num("expenseHousing") + num("expenseOther");
-  const passiveIncome = num("incomeRent") + num("incomeDividend");
-  return { totalAssets, totalDebt, netWorth: totalAssets - totalDebt, totalIncome, totalExpense, passiveIncome, cashFlow: totalIncome - totalExpense };
-}
-
-function calcFireDate(current, target, monthlyInvestment, annualReturn){
-  if (current >= target) return { months: 0, label: "已達成" };
-  if (monthlyInvestment <= 0 && annualReturn <= 0) return { months: null, label: "無法估算" };
-  let balance = current;
-  let months = 0;
-  const r = annualReturn / 100 / 12;
-  while (balance < target && months < 1200){
-    balance = balance * (1 + r) + monthlyInvestment;
-    months++;
-  }
-  if (months >= 1200) return { months: null, label: "超過 100 年" };
-  const date = new Date();
-  date.setMonth(date.getMonth() + months);
-  return { months, label: `${date.getFullYear()}/${String(date.getMonth()+1).padStart(2,"0")}` };
-}
-
-function getDashboardData(){
-  const data = {};
-  dashboardIds.forEach(id => data[id] = $(id)?.value || "");
-  return data;
-}
-
-function applyDashboardData(data = {}){
-  Object.entries(data).forEach(([id, value]) => { if ($(id)) $(id).value = value; });
-  moneyIds.forEach(id => { if ($(id)?.value) formatMoneyInput($(id)); });
-}
-
-async function saveDashboard(){
-  if (!currentUser) return;
-  setText("syncStatus", "同步中...");
-  await setDoc(doc(db, "users", currentUser.uid, "data", "dashboard"), {
-    ...getDashboardData(),
-    updatedAt: serverTimestamp()
-  }, { merge: true });
-  setText("syncStatus", "已同步到雲端");
-}
-
-async function loadDashboard(){
-  const ref = doc(db, "users", currentUser.uid, "data", "dashboard");
-  const snap = await getDoc(ref);
-  if (snap.exists()) applyDashboardData(snap.data());
-  else await saveDashboard();
-  updateUI(false);
-}
-
-async function saveRecord(){
-  if (!currentUser) return;
-  const date = $("recordDate").value;
-  if (!date) return alert("請選擇日期");
-  await addDoc(collection(db, "users", currentUser.uid, "records"), {
-    date,
-    assets: $("recordAssets").value,
-    debt: $("recordDebt").value,
-    income: $("recordIncome").value,
-    expense: $("recordExpense").value,
-    note: $("recordNote").value,
-    createdAt: serverTimestamp()
-  });
-  ["recordDate","recordAssets","recordDebt","recordIncome","recordExpense","recordNote"].forEach(id => $(id).value = "");
-  await loadRecords();
-}
-
-async function loadRecords(){
-  records = [];
-  const q = query(collection(db, "users", currentUser.uid, "records"), orderBy("date", "desc"));
-  const snaps = await getDocs(q);
-  snaps.forEach(s => records.push({ id: s.id, ...s.data() }));
-  renderRecords();
-  renderCharts();
-}
-
-async function removeRecord(id){
-  if (!confirm("確定刪除這筆紀錄？")) return;
-  await deleteFirestoreDoc(doc(db, "users", currentUser.uid, "records", id));
-  await loadRecords();
-}
-
-function updateUI(autoSave = true){
-  const s = snapshot();
-  const fireTarget = num("fireTarget");
-  const firePercent = fireTarget ? Math.min(Math.max(s.netWorth / fireTarget * 100, 0), 100) : 0;
-  const passiveCoverage = s.totalExpense ? Math.min(s.passiveIncome / s.totalExpense * 100, 100) : 0;
-  const fire = calcFireDate(s.netWorth, fireTarget, num("monthlyInvestment"), Number($("annualReturn").value) || 0);
-
-  setText("netWorthText", money(s.netWorth));
-  setText("firePercentText", firePercent.toFixed(1) + "%");
-  setText("fireDateText", "預估 FI：" + fire.label);
-  setText("totalAssetsText", money(s.totalAssets));
-  setText("totalDebtText", money(s.totalDebt));
-  setText("cashFlowText", money(s.cashFlow));
-  setText("passiveCoverageText", passiveCoverage.toFixed(1) + "%");
-  $("cashFlowText").className = s.cashFlow >= 0 ? "green" : "red";
-  $("fireProgressBar").style.width = firePercent + "%";
-
-  const delta = records.length ? s.netWorth - (moneyValue(records[0].assets) - moneyValue(records[0].debt)) : 0;
-  setText("netWorthDelta", records.length ? `較最近紀錄 ${delta >= 0 ? "+" : ""}${money(delta)}` : "新增月紀錄後會顯示變化");
-
-  renderCoach();
-  renderCharts();
-  if (autoSave) debounceSave();
-}
-
-let saveTimer;
-function debounceSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveDashboard, 700); }
-
-function renderRecords(){
-  const box = $("recordList");
-  if (!records.length){ box.innerHTML = `<p class="muted">尚無紀錄。可以先用目前數字建立第一筆月紀錄。</p>`; return; }
-  box.innerHTML = records.map(r => {
-    const nw = moneyValue(r.assets) - moneyValue(r.debt);
-    return `<div class="record-item">
-      <div class="record-top"><strong>${r.date}</strong><span>${money(nw)}</span></div>
-      <div class="record-line"><span>資產 ${r.assets || 0}</span><span>負債 ${r.debt || 0}</span></div>
-      <div class="record-line"><span>收入 ${r.income || 0}</span><span>支出 ${r.expense || 0}</span></div>
-      <p class="muted">${r.note || ""}</p>
-      <button class="danger" data-delete="${r.id}">刪除</button>
-    </div>`;
-  }).join("");
-  document.querySelectorAll("[data-delete]").forEach(btn => btn.onclick = () => removeRecord(btn.dataset.delete));
-}
-
-function renderCoach(){
-  const s = snapshot();
-  const savingsRate = s.totalIncome ? (s.cashFlow / s.totalIncome * 100) : 0;
-  const fireTarget = num("fireTarget");
-  const firePercent = fireTarget ? s.netWorth / fireTarget * 100 : 0;
-  const extra = calcFireDate(s.netWorth, fireTarget, num("monthlyInvestment") + 10000, Number($("annualReturn").value) || 0);
-  const base = calcFireDate(s.netWorth, fireTarget, num("monthlyInvestment"), Number($("annualReturn").value) || 0);
-  const advance = base.months && extra.months ? Math.max(base.months - extra.months, 0) : 0;
-  const insights = [
-    `目前淨資產為 <strong>${money(s.netWorth)}</strong>，FIRE 進度約 <strong>${firePercent.toFixed(1)}%</strong>。`,
-    `本月現金流為 <strong>${money(s.cashFlow)}</strong>，儲蓄率約 <strong>${savingsRate.toFixed(1)}%</strong>。`,
-    `若每月多投入 NT$10,000，預估可提前 <strong>${advance}</strong> 個月達成 FIRE。`,
-    s.cashFlow >= 0 ? `現金流為正，狀態健康。下一步可以專注提高投資比例。` : `現金流為負，建議先檢查固定支出與非必要支出。`
-  ];
-  const html = insights.map(x => `<div class="insight">${x}</div>`).join("");
-  setText("coachSummary", "");
-  $("coachSummary").innerHTML = html;
-  $("coachFull").innerHTML = html;
-}
-
-function renderCharts(){
-  const make = (key, id, type, data, options = {}) => {
-    const el = $(id); if (!el) return;
-    if (charts[key]) charts[key].destroy();
-    charts[key] = new Chart(el, { type, data, options });
-  };
-  const s = snapshot();
-  make("asset", "assetChart", "doughnut", {
-    labels: ["股票/ETF", "現金", "房地產", "其他"],
-    datasets: [{ data: [num("assetStocks"), num("assetCash"), num("assetRealEstate"), num("assetOther")] }]
-  });
-  make("cash", "cashChart", "bar", {
-    labels: ["收入", "支出", "現金流"],
-    datasets: [{ label: "每月金額", data: [s.totalIncome, s.totalExpense, s.cashFlow] }]
-  }, { scales: { y: { beginAtZero: true } } });
-  const asc = [...records].sort((a,b) => String(a.date).localeCompare(String(b.date)));
-  make("history", "historyChart", "line", {
-    labels: asc.map(r => r.date),
-    datasets: [{ label: "淨資產", data: asc.map(r => moneyValue(r.assets) - moneyValue(r.debt)), tension: .35 }]
-  });
-}
-
-function prefillRecord(){
-  const s = snapshot();
-  $("recordDate").valueAsDate = new Date();
-  $("recordAssets").value = plain(s.totalAssets);
-  $("recordDebt").value = plain(s.totalDebt);
-  $("recordIncome").value = plain(s.totalIncome);
-  $("recordExpense").value = plain(s.totalExpense);
-}
-
-function exportData(){
-  const data = { dashboard: getDashboardData(), records, exportedAt: new Date().toISOString() };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob); a.download = "fire-os-backup.json"; a.click(); URL.revokeObjectURL(a.href);
-}
-
-async function wipeData(){
-  if (!currentUser || !confirm("確定清除你的雲端 Dashboard 資料？月紀錄會保留。")) return;
-  await deleteDoc(doc(db, "users", currentUser.uid, "data", "dashboard"));
-  location.reload();
-}
-
-function bindEvents(){
-  $("googleLoginBtn").onclick = async () => { await signInWithPopup(auth, provider); };
-  $("logoutBtn").onclick = async () => signOut(auth);
-  $("saveDashboardBtn").onclick = saveDashboard;
-  $("saveRecordBtn").onclick = saveRecord;
-  $("prefillRecordBtn").onclick = prefillRecord;
-  $("exportBtn").onclick = exportData;
-  $("wipeBtn").onclick = wipeData;
-  moneyIds.forEach(id => {
-    const el = $(id);
-    if (!el) return;
-    el.setAttribute("inputmode", "numeric");
-    el.addEventListener("input", () => { formatMoneyInput(el); if (!id.startsWith("record")) updateUI(); });
-    if (el.value) formatMoneyInput(el);
-  });
-  $("annualReturn").addEventListener("input", () => updateUI());
-  document.querySelectorAll(".nav").forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll(".nav").forEach(b => b.classList.remove("active"));
-      document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
-      btn.classList.add("active");
-      $(btn.dataset.panel).classList.add("active");
-      renderCharts();
-    };
-  });
-}
-
-function showLoggedIn(user){
-  currentUser = user;
-  $("loginView").classList.add("hidden");
-  $("dashboardView").classList.remove("hidden");
-  setText("userName", user.displayName || "User");
-  setText("userEmail", user.email || "");
-  setText("userTitle", `歡迎回來，${(user.displayName || "朋友").split(" ")[0]} 👋`);
-  setText("syncStatus", "讀取雲端資料...");
-  $("userPhoto").src = user.photoURL || "";
-}
-
-function showLoggedOut(){
-  currentUser = null;
-  $("dashboardView").classList.add("hidden");
-  $("loginView").classList.remove("hidden");
-  setText("syncStatus", "尚未登入");
-}
-
-bindEvents();
-onAuthStateChanged(auth, async user => {
-  if (!user) return showLoggedOut();
-  showLoggedIn(user);
-  try { await loadDashboard(); await loadRecords(); setText("syncStatus", "已同步到雲端"); }
-  catch (err) { console.error(err); alert("Firebase 讀寫失敗，請確認 Firestore Rules 與授權網域設定。\n" + err.message); setText("syncStatus", "同步失敗"); }
-});
+const firebaseConfig = { apiKey:"AIzaSyB5jUo6VmTNTRtCfwWhkwwXLYv1dcTSSi4", authDomain:"fire-dashboard-86bb9.firebaseapp.com", projectId:"fire-dashboard-86bb9", storageBucket:"fire-dashboard-86bb9.firebasestorage.app", messagingSenderId:"153073679515", appId:"1:153073679515:web:f49de492d1e79109fd1a3e", measurementId:"G-T34VDEFP7J" };
+const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app); const provider = new GoogleAuthProvider();
+let user=null, state=null, charts={};
+const $=id=>document.getElementById(id);
+const fmt=n=>"NT$"+Math.round(Number(n)||0).toLocaleString("zh-TW");
+const raw=v=>Number(String(v||0).replace(/,/g,"").replace(/[^\d.-]/g,""))||0;
+const nf=n=>Math.round(Number(n)||0).toLocaleString("zh-TW");
+const defaultData={settings:{displayName:"",emergencyMonths:6},fire:{goal:30000000,monthlyInvestment:60000,annualReturn:8},assets:[{id:crypto.randomUUID(),name:"股票 / ETF",type:"投資",amount:6000000},{id:crypto.randomUUID(),name:"現金 / 存款",type:"現金",amount:800000},{id:crypto.randomUUID(),name:"房地產",type:"房產",amount:3000000}],liabilities:[{id:crypto.randomUUID(),name:"房貸",amount:2300000}],investments:[{id:crypto.randomUUID(),symbol:"0050",name:"元大台灣50",cost:2300000,value:2850000,dividend:68000},{id:crypto.randomUUID(),symbol:"VOO",name:"Vanguard S&P 500",cost:1200000,value:1560000,dividend:32000}],income:[{id:crypto.randomUUID(),name:"薪水",amount:95000},{id:crypto.randomUUID(),name:"租金",amount:18000},{id:crypto.randomUUID(),name:"股息 / 利息",amount:12000}],expenses:[{id:crypto.randomUUID(),name:"生活費",amount:30000},{id:crypto.randomUUID(),name:"房貸",amount:25800},{id:crypto.randomUUID(),name:"保險",amount:5000}],journal:[{id:crypto.randomUUID(),date:new Date().toISOString().slice(0,10),title:"建立 FIRE OS 2.0",amount:0,note:"開始用雲端同步管理財務。"}],history:[{month:"2025-04",netWorth:5900000},{month:"2025-05",netWorth:6150000},{month:"2025-06",netWorth:6420000},{month:"2025-07",netWorth:6810000},{month:"2025-08",netWorth:7200000}]};
+function clone(o){return JSON.parse(JSON.stringify(o))}
+function userRef(){return doc(db,"users",user.uid)}
+async function loadData(){const snap=await getDoc(userRef());if(snap.exists())state=snap.data();else{state=clone(defaultData);state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};await saveData()}renderAll()}
+async function saveData(){if(!user||!state)return;state.updatedAt=serverTimestamp();await setDoc(userRef(),state,{merge:true})}
+function totals(){const assets=state.assets.reduce((s,x)=>s+raw(x.amount),0)+state.investments.reduce((s,x)=>s+raw(x.value),0);const debt=state.liabilities.reduce((s,x)=>s+raw(x.amount),0);const income=state.income.reduce((s,x)=>s+raw(x.amount),0);const expenses=state.expenses.reduce((s,x)=>s+raw(x.amount),0);const passive=state.income.filter(x=>/租|股息|利息|被動/i.test(x.name)).reduce((s,x)=>s+raw(x.amount),0);return{assets,debt,netWorth:assets-debt,income,expenses,cashflow:income-expenses,passive}}
+function calcFire(){const t=totals();const goal=raw(state.fire.goal);const p=goal?Math.min(Math.max(t.netWorth/goal*100,0),100):0;let bal=t.netWorth,months=0,mr=(raw(state.fire.annualReturn)/100)/12,mi=raw(state.fire.monthlyInvestment);while(bal<goal&&months<1200){bal=bal*(1+mr)+mi;months++}return{percent:p,months:months>=1200?null:months}}
+function renderAll(){renderUser();renderDashboard();renderLists();renderFire();renderAI();renderCharts();}
+function renderUser(){$("userName").textContent=state.settings.displayName||user.displayName||"User";$("userEmail").textContent=user.email;$("userPhoto").src=user.photoURL||"";$("displayNameInput").value=state.settings.displayName||"";$("emergencyMonthsInput").value=state.settings.emergencyMonths||6;}
+function renderDashboard(){const t=totals(), f=calcFire();$("netWorthHero").textContent=fmt(t.netWorth);$("kpiAssets").textContent=fmt(t.assets);$("kpiDebt").textContent=fmt(t.debt);$("kpiCashflow").textContent=fmt(t.cashflow);$("kpiCashflow").className=t.cashflow>=0?"positive":"";$("kpiPassive").textContent=(t.expenses?Math.min(t.passive/t.expenses*100,999):0).toFixed(1)+"%";$("fireRing").textContent=f.percent.toFixed(0)+"%";document.querySelector(".ring").style.setProperty("--p",f.percent+"%");$("heroDelta").textContent="Cloud synced · "+new Date().toLocaleDateString("zh-TW");}
+function itemHTML(item,kind){const title=item.name||item.symbol;const sub=item.type||item.name||"";const amount=kind==="investment"?raw(item.value):raw(item.amount);return`<div class="item"><div><strong>${title}</strong><span>${sub}</span></div><div class="amount">${fmt(amount)}</div><button class="ghost-btn" data-edit="${kind}" data-id="${item.id}">編輯</button></div>`}
+function renderLists(){$("assetList").innerHTML=state.assets.map(x=>itemHTML(x,"asset")).join("")+state.liabilities.map(x=>itemHTML({...x,type:"負債"},"liability")).join("");$("investmentList").innerHTML=state.investments.map(x=>`<div class="item"><div><strong>${x.symbol}</strong><span>${x.name} · 成本 ${fmt(x.cost)} · 股息 ${fmt(x.dividend)}</span></div><div class="amount">${fmt(x.value)}</div><button class="ghost-btn" data-edit="investment" data-id="${x.id}">編輯</button></div>`).join("");$("incomeList").innerHTML=state.income.map(x=>itemHTML(x,"income")).join("");$("expenseList").innerHTML=state.expenses.map(x=>itemHTML(x,"expense")).join("");$("journalList").innerHTML=state.journal.map(x=>`<div class="timeline-item"><strong>${x.date} · ${x.title}</strong><p>${fmt(x.amount)}</p><span>${x.note||""}</span></div>`).join("");document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openEdit(b.dataset.edit,b.dataset.id));}
+function renderFire(){const f=calcFire(),t=totals();$("fireGoalInput").value=nf(state.fire.goal);$("monthlyInvestInput").value=nf(state.fire.monthlyInvestment);$("returnInput").value=state.fire.annualReturn;$("fireProgress").style.width=f.percent+"%";if(f.months===null)$("fireEta").textContent="超過 100 年";else{const d=new Date();d.setMonth(d.getMonth()+f.months);$("fireEta").textContent=`${Math.floor(f.months/12)} 年 ${f.months%12} 個月 · ${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,"0")}`}}
+function renderAI(){const t=totals(), f=calcFire();const saveRate=t.income?((t.income-t.expenses)/t.income*100):0;const cash=state.assets.find(x=>/現金|存款/.test(x.name))?.amount||0;const emergency=t.expenses*(state.settings.emergencyMonths||6);const insights=[`你的目前淨資產為 ${fmt(t.netWorth)}，FIRE 進度 ${f.percent.toFixed(1)}%。`,`本月儲蓄率約 ${saveRate.toFixed(1)}%，現金流為 ${fmt(t.cashflow)}。`,raw(cash)<emergency?`現金預備金低於 ${state.settings.emergencyMonths} 個月支出目標，建議逐步提高到 ${fmt(emergency)}。`:`現金預備金看起來充足，已達 ${state.settings.emergencyMonths} 個月支出目標。`,`若每月投資維持 ${fmt(state.fire.monthlyInvestment)}，預估約 ${$("fireEta").textContent} 達成 FIRE。`];$("aiInsights").innerHTML=insights.map(x=>`<div class="insight">${x}</div>`).join("")}
+function chart(key,el,type,data,options={}){if(charts[key])charts[key].destroy();charts[key]=new Chart($(el),{type,data,options})}
+function renderCharts(){if(!$('assetChart'))return;const labels=[...state.assets.map(x=>x.name),...state.investments.map(x=>x.symbol)],data=[...state.assets.map(x=>raw(x.amount)),...state.investments.map(x=>raw(x.value))];chart("asset","assetChart","doughnut",{labels,datasets:[{data}]});chart("nw","netWorthChart","line",{labels:state.history.map(x=>x.month),datasets:[{label:"Net Worth",data:state.history.map(x=>x.netWorth),tension:.35}]},{scales:{y:{beginAtZero:false}}})}
+function openEdit(kind,id){const dialog=$("editDialog"), fields=$("dialogFields");let arr=state[kind+"s"]||state[kind]; let item=id?arr.find(x=>x.id===id):{id:crypto.randomUUID()};const configs={asset:[["name","名稱"],["type","類型"],["amount","金額"]],liability:[["name","名稱"],["amount","金額"]],income:[["name","名稱"],["amount","金額"]],expense:[["name","名稱"],["amount","金額"]],investment:[["symbol","代號"],["name","名稱"],["cost","成本"],["value","現值"],["dividend","股息"]],journal:[["date","日期"],["title","標題"],["amount","金額"],["note","備註"]]};$("dialogTitle").textContent=(id?"編輯":"新增")+" "+kind;fields.innerHTML=configs[kind].map(([k,l])=>`<label>${l}</label><input name="${k}" value="${item[k]??""}">`).join("");dialog.showModal();$("editForm").onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target);configs[kind].forEach(([k])=>item[k]=fd.get(k));["amount","cost","value","dividend"].forEach(k=>{if(item[k]!=null)item[k]=raw(item[k])});if(!id)arr.unshift(item);await saveData();dialog.close();renderAll();}}
+function add(kind){openEdit(kind,null)}
+function bind(){document.querySelectorAll(".nav").forEach(b=>b.onclick=()=>{document.querySelectorAll(".nav").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".page").forEach(x=>x.classList.remove("active-page"));b.classList.add("active");$(b.dataset.page).classList.add("active-page");$("pageTitle").textContent=b.textContent.replace(/[🏠💰📈💵🎯📅🤖⚙️]/g,"").trim();renderCharts();});$("googleLoginBtn").onclick=()=>signInWithPopup(auth,provider);$("logoutBtn").onclick=()=>signOut(auth);$("saveBtn").onclick=async()=>{await saveData();alert("已同步到 Firestore")};$("addAssetBtn").onclick=()=>add("asset");$("addInvestmentBtn").onclick=()=>add("investment");$("addIncomeBtn").onclick=()=>add("income");$("addExpenseBtn").onclick=()=>add("expense");$("addJournalBtn").onclick=()=>add("journal");$("fireGoalInput").oninput=e=>{state.fire.goal=raw(e.target.value);e.target.value=nf(state.fire.goal);renderAll();saveData()};$("monthlyInvestInput").oninput=e=>{state.fire.monthlyInvestment=raw(e.target.value);e.target.value=nf(state.fire.monthlyInvestment);renderAll();saveData()};$("returnInput").oninput=e=>{state.fire.annualReturn=raw(e.target.value);renderAll();saveData()};$("displayNameInput").oninput=e=>{state.settings.displayName=e.target.value;renderUser();saveData()};$("emergencyMonthsInput").oninput=e=>{state.settings.emergencyMonths=raw(e.target.value);renderAI();saveData()};$("resetDemoBtn").onclick=async()=>{if(confirm("確定重置成示範資料？")){state=clone(defaultData);state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};await saveData();renderAll();}}}
+bind();onAuthStateChanged(auth,async u=>{user=u;if(u){$("loginView").classList.add("hidden");$("appView").classList.remove("hidden");await loadData();}else{$("loginView").classList.remove("hidden");$("appView").classList.add("hidden");}});

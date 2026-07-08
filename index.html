@@ -1,155 +1,125 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FIRE OS 1.0</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FIRE OS 2.0</title>
+  <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="assets/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar" id="sidebar">
-      <div class="brand">
-        <div class="brand-icon">🔥</div>
-        <div><strong>FIRE OS</strong><span>Personal Wealth OS</span></div>
-      </div>
+  <div class="orb orb-a"></div><div class="orb orb-b"></div>
+
+  <section id="loginView" class="login-shell">
+    <div class="login-card glass">
+      <div class="logo-mark">🔥</div>
+      <h1>FIRE OS 2.0</h1>
+      <p>Your Personal Wealth Operating System</p>
+      <button id="googleLoginBtn" class="primary-btn">使用 Google 登入</button>
+      <p class="tiny">登入後資料會同步到 Firebase Firestore。</p>
+    </div>
+  </section>
+
+  <main id="appView" class="app hidden">
+    <aside class="sidebar glass">
+      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.0</small></div>
       <nav>
-        <button class="nav active" data-panel="dashboard">🏠 Dashboard</button>
-        <button class="nav" data-panel="input">💰 財務資料</button>
-        <button class="nav" data-panel="records">📅 月紀錄</button>
-        <button class="nav" data-panel="charts">📊 圖表</button>
-        <button class="nav" data-panel="coach">🤖 AI 教練</button>
-        <button class="nav" data-panel="settings">⚙️ 設定</button>
+        <button class="nav active" data-page="dashboard">🏠 Dashboard</button>
+        <button class="nav" data-page="assets">💰 Assets</button>
+        <button class="nav" data-page="investments">📈 Investments</button>
+        <button class="nav" data-page="cashflow">💵 Cashflow</button>
+        <button class="nav" data-page="fire">🎯 FIRE</button>
+        <button class="nav" data-page="journal">📅 Journal</button>
+        <button class="nav" data-page="ai">🤖 AI Coach</button>
+        <button class="nav" data-page="settings">⚙️ Settings</button>
       </nav>
-      <div class="sidebar-footer">
-        <span id="syncStatus">尚未登入</span>
+      <div class="profile-mini">
+        <img id="userPhoto" alt="user" />
+        <div><strong id="userName">User</strong><span id="userEmail"></span></div>
       </div>
+      <button id="logoutBtn" class="ghost-btn">登出</button>
     </aside>
 
-    <main class="main">
-      <section class="login-view" id="loginView">
-        <div class="login-card glass">
-          <div class="hero-mark">🔥</div>
-          <h1>FIRE OS 1.0</h1>
-          <p>用 Google 登入，讓你的財富自由 Dashboard 雲端同步。</p>
-          <button class="primary full" id="googleLoginBtn">使用 Google 登入</button>
-          <p class="tiny">資料會存在 Firebase Firestore，並依照你的 Google 帳號分開保存。</p>
+    <section class="content">
+      <header class="topbar">
+        <div><p id="greeting" class="eyebrow">Good Evening</p><h1 id="pageTitle">Dashboard</h1></div>
+        <div class="top-actions"><button id="saveBtn" class="primary-btn small">同步資料</button></div>
+      </header>
+
+      <section id="dashboard" class="page active-page">
+        <div class="hero glass">
+          <div><p class="eyebrow">Net Worth</p><h2 id="netWorthHero">NT$0</h2><p id="heroDelta" class="positive">Firestore synced</p></div>
+          <div class="ring"><span id="fireRing">0%</span></div>
+        </div>
+        <div class="kpi-grid">
+          <div class="card glass"><p>Total Assets</p><h3 id="kpiAssets">NT$0</h3></div>
+          <div class="card glass"><p>Total Debt</p><h3 id="kpiDebt">NT$0</h3></div>
+          <div class="card glass"><p>Monthly Cashflow</p><h3 id="kpiCashflow">NT$0</h3></div>
+          <div class="card glass"><p>Passive Coverage</p><h3 id="kpiPassive">0%</h3></div>
+        </div>
+        <div class="two-col">
+          <div class="card glass"><h3>資產配置</h3><canvas id="assetChart"></canvas></div>
+          <div class="card glass"><h3>淨資產趨勢</h3><canvas id="netWorthChart"></canvas></div>
         </div>
       </section>
 
-      <section class="dashboard-view hidden" id="dashboardView">
-        <header class="topbar glass">
-          <div>
-            <p class="eyebrow" id="greeting">Good Evening</p>
-            <h1 id="userTitle">歡迎回來</h1>
-          </div>
-          <div class="user-box">
-            <img id="userPhoto" alt="user" />
-            <div><strong id="userName">User</strong><span id="userEmail"></span></div>
-            <button class="ghost" id="logoutBtn">登出</button>
-          </div>
-        </header>
-
-        <section class="panel active" id="dashboard">
-          <div class="hero-grid">
-            <div class="hero-card glass">
-              <p class="eyebrow">Net Worth</p>
-              <h2 id="netWorthText">NT$0</h2>
-              <span id="netWorthDelta">雲端同步版</span>
-            </div>
-            <div class="fire-card glass">
-              <p class="eyebrow">FIRE Progress</p>
-              <h2 id="firePercentText">0%</h2>
-              <div class="progress"><div id="fireProgressBar"></div></div>
-              <span id="fireDateText">預估達成日期 --</span>
-            </div>
-          </div>
-
-          <div class="kpi-grid">
-            <div class="kpi glass"><span>總資產</span><strong id="totalAssetsText">NT$0</strong></div>
-            <div class="kpi glass"><span>總負債</span><strong class="red" id="totalDebtText">NT$0</strong></div>
-            <div class="kpi glass"><span>月現金流</span><strong id="cashFlowText">NT$0</strong></div>
-            <div class="kpi glass"><span>被動收入覆蓋率</span><strong class="green" id="passiveCoverageText">0%</strong></div>
-          </div>
-
-          <div class="two-col">
-            <div class="card glass"><h2>資產配置</h2><canvas id="assetChart"></canvas></div>
-            <div class="card glass"><h2>AI 快速洞察</h2><div id="coachSummary" class="coach-box"></div></div>
-          </div>
-        </section>
-
-        <section class="panel" id="input">
-          <div class="two-col">
-            <div class="card glass"><h2>資產</h2>
-              <label>股票 / ETF</label><input class="money-input" id="assetStocks" value="6,000,000" />
-              <label>現金 / 存款</label><input class="money-input" id="assetCash" value="800,000" />
-              <label>房地產</label><input class="money-input" id="assetRealEstate" value="3,000,000" />
-              <label>其他資產</label><input class="money-input" id="assetOther" value="200,000" />
-            </div>
-            <div class="card glass"><h2>負債</h2>
-              <label>房貸</label><input class="money-input" id="debtMortgage" value="2,300,000" />
-              <label>信貸</label><input class="money-input" id="debtLoan" value="200,000" />
-              <label>車貸</label><input class="money-input" id="debtCar" value="300,000" />
-              <label>信用卡</label><input class="money-input" id="debtCreditCard" value="0" />
-            </div>
-          </div>
-          <div class="two-col">
-            <div class="card glass"><h2>每月收入</h2>
-              <label>薪水</label><input class="money-input" id="incomeSalary" value="85,000" />
-              <label>租金收入</label><input class="money-input" id="incomeRent" value="18,000" />
-              <label>股息 / 利息</label><input class="money-input" id="incomeDividend" value="26,000" />
-              <label>其他收入</label><input class="money-input" id="incomeOther" value="5,000" />
-            </div>
-            <div class="card glass"><h2>每月支出與 FIRE</h2>
-              <label>生活費</label><input class="money-input" id="expenseLiving" value="30,000" />
-              <label>房貸 / 租金</label><input class="money-input" id="expenseHousing" value="25,000" />
-              <label>其他支出</label><input class="money-input" id="expenseOther" value="19,000" />
-              <label>FIRE 目標</label><input class="money-input" id="fireTarget" value="30,000,000" />
-              <label>每月投資</label><input class="money-input" id="monthlyInvestment" value="40,000" />
-              <label>年化報酬率 %</label><input id="annualReturn" type="number" value="8" />
-            </div>
-          </div>
-          <button class="primary" id="saveDashboardBtn">儲存到雲端</button>
-        </section>
-
-        <section class="panel" id="records">
-          <div class="two-col">
-            <div class="card glass"><h2>新增月紀錄</h2>
-              <button class="ghost full" id="prefillRecordBtn">帶入目前 Dashboard 數字</button>
-              <label>日期</label><input id="recordDate" type="date" />
-              <label>總資產</label><input class="money-input" id="recordAssets" />
-              <label>總負債</label><input class="money-input" id="recordDebt" />
-              <label>收入</label><input class="money-input" id="recordIncome" />
-              <label>支出</label><input class="money-input" id="recordExpense" />
-              <label>備註</label><textarea id="recordNote" placeholder="例如：買 ETF、收到股息、支出增加..."></textarea>
-              <button class="primary full" id="saveRecordBtn">儲存紀錄</button>
-            </div>
-            <div class="card glass"><h2>歷史紀錄</h2><div id="recordList"></div></div>
-          </div>
-        </section>
-
-        <section class="panel" id="charts">
-          <div class="two-col">
-            <div class="card glass"><h2>收入 / 支出 / 現金流</h2><canvas id="cashChart"></canvas></div>
-            <div class="card glass"><h2>淨資產歷史</h2><canvas id="historyChart"></canvas></div>
-          </div>
-        </section>
-
-        <section class="panel" id="coach">
-          <div class="card glass"><h2>AI 財務教練</h2><div id="coachFull" class="coach-box large"></div></div>
-        </section>
-
-        <section class="panel" id="settings">
-          <div class="card glass"><h2>設定</h2>
-            <p>目前版本：FIRE OS 1.0 Firebase Edition</p>
-            <button class="ghost" id="exportBtn">匯出 JSON 備份</button>
-            <button class="danger" id="wipeBtn">清除我的雲端資料</button>
-          </div>
-        </section>
+      <section id="assets" class="page">
+        <div class="section-head"><h2>資產管理</h2><button class="primary-btn small" id="addAssetBtn">新增資產</button></div>
+        <div id="assetList" class="list"></div>
       </section>
-    </main>
-  </div>
+
+      <section id="investments" class="page">
+        <div class="section-head"><h2>投資組合</h2><button class="primary-btn small" id="addInvestmentBtn">新增投資</button></div>
+        <div id="investmentList" class="list"></div>
+      </section>
+
+      <section id="cashflow" class="page">
+        <div class="two-col">
+          <div class="card glass"><h3>每月收入</h3><div id="incomeList"></div><button class="ghost-btn full" id="addIncomeBtn">新增收入</button></div>
+          <div class="card glass"><h3>每月支出</h3><div id="expenseList"></div><button class="ghost-btn full" id="addExpenseBtn">新增支出</button></div>
+        </div>
+      </section>
+
+      <section id="fire" class="page">
+        <div class="card glass fire-card">
+          <h2>FIRE 模擬器</h2>
+          <label>FIRE 目標金額</label><input id="fireGoalInput" class="money-input" />
+          <label>每月投資金額</label><input id="monthlyInvestInput" class="money-input" />
+          <label>年化報酬率 (%)</label><input id="returnInput" type="number" />
+          <div class="summary-line"><span>預估達成</span><strong id="fireEta">--</strong></div>
+          <div class="progress"><i id="fireProgress"></i></div>
+        </div>
+      </section>
+
+      <section id="journal" class="page">
+        <div class="section-head"><h2>財務日誌</h2><button class="primary-btn small" id="addJournalBtn">新增日誌</button></div>
+        <div id="journalList" class="timeline"></div>
+      </section>
+
+      <section id="ai" class="page">
+        <div class="card glass"><h2>AI Coach</h2><div id="aiInsights" class="insights"></div></div>
+      </section>
+
+      <section id="settings" class="page">
+        <div class="card glass settings-card">
+          <h2>設定</h2>
+          <label>顯示名稱</label><input id="displayNameInput" />
+          <label>預備金目標（月支出倍數）</label><input id="emergencyMonthsInput" type="number" />
+          <button id="resetDemoBtn" class="ghost-btn full">重置為示範資料</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <dialog id="editDialog" class="glass dialog">
+    <form method="dialog" id="editForm">
+      <h3 id="dialogTitle">新增</h3>
+      <div id="dialogFields"></div>
+      <div class="dialog-actions"><button class="ghost-btn" value="cancel">取消</button><button id="dialogSave" class="primary-btn" value="default">儲存</button></div>
+    </form>
+  </dialog>
+
   <script type="module" src="assets/js/app.js"></script>
 </body>
 </html>
