@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FIRE OS 2.1</title>
+  <title>FIRE OS 2.2.1</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="assets/css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,8 +14,8 @@
   <section id="loginView" class="login-shell">
     <div class="login-card glass">
       <div class="logo-mark">🔥</div>
-      <h1>FIRE OS 2.1</h1>
-      <p>Your Personal Wealth Operating System</p>
+      <h1>FIRE OS 2.2.1</h1>
+      <p>Net Worth Mobile UI Edition</p>
       <button id="googleLoginBtn" class="primary-btn">使用 Google 登入</button>
       <p class="tiny">登入後資料會同步到 Firebase Firestore。</p>
     </div>
@@ -23,7 +23,7 @@
 
   <main id="appView" class="app hidden">
     <aside class="sidebar glass">
-      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.1</small></div>
+      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.2.1</small></div>
       <nav>
         <button class="nav active" data-page="dashboard">🏠 Dashboard</button>
         <button class="nav" data-page="assets">💰 Assets</button>
@@ -65,8 +65,8 @@
       </section>
 
       <section id="assets" class="page">
-        <div class="section-head"><h2>資產管理</h2><button class="primary-btn small" id="addAssetBtn">新增資產</button></div>
-        <div id="assetList" class="list"></div>
+        <div class="section-head"><h2>資產管理</h2><div class="inline-actions"><button class="primary-btn small" id="addAssetBtn">新增資產</button><button class="ghost-btn small" id="addLiabilityBtn">新增負債</button></div></div>
+        <div class="two-col no-top"><div class="card glass"><h3>資產</h3><div id="assetList" class="list"></div></div><div class="card glass"><h3>負債</h3><div id="liabilityList" class="list"></div></div></div>
       </section>
 
       <section id="investments" class="page">
@@ -93,7 +93,7 @@
       </section>
 
       <section id="journal" class="page">
-        <div class="section-head"><h2>財務日誌</h2><button class="primary-btn small" id="addJournalBtn">新增日誌</button></div>
+        <div class="section-head"><h2>財務日誌</h2><div class="inline-actions"><button class="ghost-btn small" id="snapshotBtn">記錄本月快照</button><button class="primary-btn small" id="addJournalBtn">新增日誌</button></div></div>
         <div id="journalList" class="timeline"></div>
       </section>
 
@@ -106,7 +106,10 @@
           <h2>設定</h2>
           <label>顯示名稱</label><input id="displayNameInput" />
           <label>預備金目標（月支出倍數）</label><input id="emergencyMonthsInput" type="number" />
-          <button id="resetDemoBtn" class="ghost-btn full">重置為示範資料</button>
+          <button id="exportBtn" class="ghost-btn full">匯出 JSON 備份</button>
+          <button id="importBtn" class="ghost-btn full">匯入 JSON 備份</button>
+          <input id="importFile" type="file" accept="application/json" class="hidden" />
+          <button id="resetDemoBtn" class="ghost-btn full danger">重置為示範資料</button>
         </div>
       </section>
     </section>
@@ -116,7 +119,7 @@
     <form method="dialog" id="editForm">
       <h3 id="dialogTitle">新增</h3>
       <div id="dialogFields"></div>
-      <div class="dialog-actions"><button class="ghost-btn" value="cancel">取消</button><button id="dialogSave" class="primary-btn" value="default">儲存</button></div>
+      <div class="dialog-actions"><button type="button" id="deleteDialogBtn" class="ghost-btn danger hidden">刪除</button><span class="spacer"></span><button class="ghost-btn" value="cancel">取消</button><button id="dialogSave" class="primary-btn" value="default">儲存</button></div>
     </form>
   </dialog>
 
