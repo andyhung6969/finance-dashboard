@@ -264,18 +264,6 @@ function renderAll() {
   renderCharts();
 }
 
-function renderAllocationBars() {
-  if (!$('allocationStrip')) return;
-  const colors = ["#76b7f0", "#65d69a", "#e9a36d", "#9c78da", "#e1707d", "#8a9890"];
-  const entries = [...state.assets.map(x => ({ name: x.name, amount: raw(x.amount) })), ...state.investments.map(x => ({ name: x.symbol || x.name, amount: raw(x.value) }))].filter(x => x.amount > 0);
-  const total = entries.reduce((sum, x) => sum + x.amount, 0) || 1;
-  const top = entries.sort((a,b)=>b.amount-a.amount).slice(0,6);
-  $('allocationStrip').innerHTML = top.map((x,i)=>`<i style="background:${colors[i%colors.length]};flex:${Math.max(x.amount/total*100,3)}"></i>`).join('');
-  const legend = top.map((x,i)=>`<span style="--dot:${colors[i%colors.length]}">${escapeHTML(x.name)} ${((x.amount/total)*100).toFixed(0)}%</span>`).join('');
-  if ($('allocationLegend')) $('allocationLegend').innerHTML = legend;
-  if ($('portfolioLegend')) $('portfolioLegend').innerHTML = top.slice(0,5).map((x,i)=>`<span style="--dot:${colors[i%colors.length]}"><b>${escapeHTML(x.name)}</b><em>${((x.amount/total)*100).toFixed(1)}%</em></span>`).join('');
-}
-
 function renderUser() {
   $("userName").textContent = state.settings.displayName || user.displayName || "User";
   $("userEmail").textContent = user.email || "";
@@ -296,23 +284,8 @@ function renderDashboard() {
   $("kpiCashflow").className = t.cashflow >= 0 ? "positive" : "negative";
   $("kpiPassive").textContent = (t.expenses ? Math.min((t.passive / t.expenses) * 100, 999) : 0).toFixed(1) + "%";
   $("fireRing").textContent = f.percent.toFixed(0) + "%";
-  const ringEl = document.querySelector(".ring"); if (ringEl) ringEl.style.setProperty("--p", f.percent + "%");
+  document.querySelector(".ring").style.setProperty("--p", f.percent + "%");
   $("heroDelta").textContent = tr("dashboard.hero", { saving: t.savingRate.toFixed(1), debt: t.debtRatio.toFixed(1) });
-  const leverage = t.debt ? (t.assets / Math.max(t.debt, 1)) : 0;
-  if ($("leverageText")) $("leverageText").textContent = leverage ? leverage.toFixed(2) + "x" : "0.00x";
-  const cash = state.assets.find(x => /cash|現金|twd|台幣/i.test(x.name || x.type || ""));
-  const cashAmount = cash ? raw(cash.amount) : 0;
-  if ($("exCashExposure")) $("exCashExposure").textContent = fmt(Math.max(t.assets - cashAmount, 0));
-  if ($("todayDelta")) $("todayDelta").textContent = currentLang() === "zh" ? "今日 ▼ -$0" : "Today ▼ -$0";
-  if ($("yearChangeText")) {
-    const history = [...state.history].sort((a,b)=>String(a.month).localeCompare(String(b.month)));
-    const first = history[0]?.netWorth ? raw(history[0].netWorth) : t.netWorth;
-    const change = t.netWorth - first;
-    const pct = first ? (change / first) * 100 : 0;
-    $("yearChangeText").textContent = `${change >= 0 ? "+" : ""}${fmt(change)} ${change >= 0 ? "+" : ""}${pct.toFixed(2)}%`;
-    $("yearChangeText").className = change >= 0 ? "positive" : "negative";
-  }
-  renderAllocationBars();
 }
 
 function simpleItemHTML(item, kind, options = {}) {
@@ -401,12 +374,12 @@ function renderCharts() {
   if (!$("assetChart") || !state) return;
   const assetLabels = [...state.assets.map(x => x.name), ...state.investments.map(x => x.symbol || x.name)];
   const assetData = [...state.assets.map(x => raw(x.amount)), ...state.investments.map(x => raw(x.value))];
-  chart("asset", "assetChart", "doughnut", { labels: assetLabels, datasets: [{ data: assetData, borderWidth: 0, hoverOffset: 8 }] }, { cutout: "62%", plugins: { legend: { display: false } } });
+  chart("asset", "assetChart", "doughnut", { labels: assetLabels, datasets: [{ data: assetData }] });
   const history = [...state.history].sort((a, b) => String(a.month).localeCompare(String(b.month)));
   chart("nw", "netWorthChart", "line", {
     labels: history.map(x => x.month),
-    datasets: [{ label: "Net Worth", data: history.map(x => raw(x.netWorth)), tension: 0.35, pointRadius: 4, borderWidth: 4 }]
-  }, { plugins: { legend: { display: false } }, scales: { x: { grid: { color: "rgba(255,255,255,.06)" }, ticks: { color: "rgba(255,255,255,.62)" } }, y: { beginAtZero: false, grid: { color: "rgba(255,255,255,.06)" }, ticks: { color: "rgba(255,255,255,.62)" } } } });
+    datasets: [{ label: "Net Worth", data: history.map(x => raw(x.netWorth)), tension: 0.35 }]
+  }, { scales: { y: { beginAtZero: false } } });
 }
 
 function getCollection(kind) {

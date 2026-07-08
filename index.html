@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FIRE OS 2.3.1</title>
+  <title>FIRE OS 2.3</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="assets/css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,7 +14,7 @@
   <section id="loginView" class="login-shell">
     <div class="login-card glass">
       <div class="logo-mark">🔥</div>
-      <h1>FIRE OS 2.3.1</h1>
+      <h1>FIRE OS 2.3</h1>
       <p>Bilingual Mobile UI Edition</p>
       <button id="googleLoginBtn" class="primary-btn" data-i18n="auth.google">使用 Google 登入</button>
       <p class="tiny" data-i18n="auth.note">登入後資料會同步到 Firebase Firestore。</p>
@@ -23,7 +23,7 @@
 
   <main id="appView" class="app hidden">
     <aside class="sidebar glass">
-      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.3.1</small></div>
+      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.3</small></div>
       <nav>
         <button class="nav active" data-page="dashboard"><span class="nav-ico">🏠</span><span class="nav-text" data-i18n="nav.dashboard">Dashboard</span></button>
         <button class="nav" data-page="assets"><span class="nav-ico">💰</span><span class="nav-text" data-i18n="nav.assets">Assets</span></button>
@@ -47,70 +47,20 @@
         <div class="top-actions"><select id="languageSelectTop" class="language-select small"><option value="zh">中文</option><option value="en">English</option></select><button id="installBtn" class="ghost-btn small hidden" data-i18n="common.install">安裝 App</button><button id="saveBtn" class="primary-btn small" data-i18n="common.sync">同步資料</button></div>
       </header>
 
-      <section id="dashboard" class="page active-page dashboard-wallet">
-        <div class="wallet-toolbar">
-          <button class="circle-btn" aria-label="more">•••</button>
-          <button class="circle-btn" id="languageRoundBtn" aria-label="language">🌐</button>
-          <button class="circle-btn active" aria-label="dashboard">▥</button>
+      <section id="dashboard" class="page active-page">
+        <div class="hero glass">
+          <div><p class="eyebrow" data-i18n="dashboard.netWorth">Net Worth</p><h2 id="netWorthHero">NT$0</h2><p id="heroDelta" class="positive">Firestore synced</p></div>
+          <div class="ring"><span id="fireRing">0%</span></div>
         </div>
-
-        <div class="wealth-card glass">
-          <div class="wealth-head">
-            <div>
-              <p class="caption" data-i18n="dashboard.netWorth">淨資產 (NETWORTH)</p>
-              <h2 id="netWorthHero">NT$0</h2>
-            </div>
-            <span class="eye-mark">◉</span>
-          </div>
-
-          <div class="seg-row">
-            <span class="mini-icon">⌁</span>
-            <span data-i18n="dashboard.netWorth">淨資產 (TWD)</span>
-            <button class="mini-chip">↔ %</button>
-            <button class="mini-chip ghost">☝</button>
-            <div class="range-tabs"><span>近月</span><strong>今年</strong><span>全部</span></div>
-          </div>
-
-          <div class="chart-wrap">
-            <div class="chart-note">
-              <span>今年變動</span>
-              <strong id="yearChangeText" class="positive">+0 0%</strong>
-            </div>
-            <canvas id="netWorthChart"></canvas>
-          </div>
-
-          <div class="exposure-row">
-            <span>排除現金曝險</span>
-            <strong id="exCashExposure">NT$0</strong>
-            <em id="todayDelta" class="negative">今日 ▼ -$0</em>
-          </div>
-
-          <div class="allocation-strip" id="allocationStrip"></div>
-          <div class="allocation-legend" id="allocationLegend"></div>
-
-          <div class="wealth-stats">
-            <div><span>💼 總資產</span><strong id="kpiAssets">NT$0</strong></div>
-            <div><span>🪙 投資槓桿</span><strong id="leverageText">0.00x</strong></div>
-            <div><span>💳 總負債</span><strong id="kpiDebt" class="negative">NT$0</strong></div>
-          </div>
-        </div>
-
-        <div class="portfolio-card glass">
-          <div class="section-title-line">
-            <h3>◔ 投資組合</h3>
-            <button class="detail-pill">☷ 明細⌄</button>
-          </div>
-          <div class="portfolio-body">
-            <canvas id="assetChart"></canvas>
-            <div id="portfolioLegend" class="portfolio-legend"></div>
-          </div>
-        </div>
-
-        <div class="kpi-grid compact-grid">
+        <div class="kpi-grid">
+          <div class="card glass"><p data-i18n="dashboard.totalAssets">Total Assets</p><h3 id="kpiAssets">NT$0</h3></div>
+          <div class="card glass"><p data-i18n="dashboard.totalDebt">Total Debt</p><h3 id="kpiDebt">NT$0</h3></div>
           <div class="card glass"><p data-i18n="dashboard.monthlyCashflow">Monthly Cashflow</p><h3 id="kpiCashflow">NT$0</h3></div>
           <div class="card glass"><p data-i18n="dashboard.passiveCoverage">Passive Coverage</p><h3 id="kpiPassive">0%</h3></div>
-          <div class="card glass"><p>FIRE</p><h3 id="fireRing">0%</h3></div>
-          <div class="card glass"><p>Insight</p><h3 id="heroDelta">Cloud synced</h3></div>
+        </div>
+        <div class="two-col">
+          <div class="card glass"><h3 data-i18n="charts.assetAllocation">資產配置</h3><canvas id="assetChart"></canvas></div>
+          <div class="card glass"><h3 data-i18n="charts.netWorthTrend">淨資產趨勢</h3><canvas id="netWorthChart"></canvas></div>
         </div>
       </section>
 
