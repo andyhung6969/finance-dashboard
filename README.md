@@ -1,18 +1,21 @@
-# FIRE OS 2.4
+# FIRE OS 2.3.1
 
-Design System Edition.
+Net Worth App inspired UI refresh based on FIRE OS 2.3.
 
-## What is new
+## Highlights
 
-- FIRE OS mobile-first design system
-- Deep green Apple Wallet inspired UI
-- Bilingual Traditional Chinese / English interface
-- Fixed bottom navigation with safe-area support
-- Net Worth hero card
-- FIRE Ring component
-- Wealth cards, timeline, assets, debt and settings screens
-- Firebase Google login and Firestore cloud sync retained
+- Keeps FIRE OS 2.3 bilingual support
+- Keeps Firebase Google Login and Firestore sync
+- Redesigns Dashboard into a Net Worth card layout
+- Adds segmented time controls, exposure strip, allocation legend, and portfolio card
+- Keeps mobile bottom navigation fix from 2.3
 
 ## Deploy
 
-Upload all files in this folder to the GitHub repository root.
+Upload these files to the root of your GitHub Pages repository:
+
+- index.html
+- manifest.json
+- service-worker.js
+- assets/
+- README.md
