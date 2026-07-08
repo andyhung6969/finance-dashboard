@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>財富自由 Dashboard v2.0</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --bg: #0b1120;
+      --card: rgba(255,255,255,.08);
+      --card2: rgba(255,255,255,.12);
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --green: #22c55e;
+      --red: #ef4444;
+      --blue: #38bdf8;
+      --yellow: #facc15;
+      --border: rgba(255,255,255,.13);
+    }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(56,189,248,.25), transparent 35%),
+        radial-gradient(circle at top right, rgba(34,197,94,.18), transparent 35%),
+        var(--bg);
+      color: var(--text);
+      padding: 24px;
+    }
+    h1, h2, h3 { margin: 0; }
+    .app { max-width: 1240px; margin: 0 auto; }
+    .login-card {
+      max-width: 430px;
+      margin: 80px auto;
+      padding: 30px;
+      border-radius: 26px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      box-shadow: 0 30px 80px rgba(0,0,0,.35);
+    }
+    .dashboard { display: none; }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .title-wrap p, .muted { color: var(--muted); margin: 6px 0 0; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.2);
+      backdrop-filter: blur(14px);
+    }
+    .card h2 { font-size: 17px; color: #cbd5e1; margin-bottom: 14px; }
+    .big { font-size: 30px; font-weight: 850; letter-spacing: -.03em; }
+    .green { color: var(--green); }
+    .red { color: var(--red); }
+    .blue { color: var(--blue); }
+    .yellow { color: var(--yellow); }
+    label { display: block; margin-top: 12px; margin-bottom: 6px; color: #cbd5e1; font-size: 14px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 13px;
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(15,23,42,.82);
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+    }
+    textarea { min-height: 76px; resize: vertical; }
+    input:focus, textarea:focus, select:focus { border-color: var(--green); }
+    button {
+      border: 0;
+      border-radius: 13px;
+      padding: 11px 15px;
+      background: var(--green);
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+      font-size: 15px;
+    }
+    button.secondary { background: rgba(255,255,255,.13); }
+    button.danger { background: rgba(239,68,68,.9); }
+    button.full { width: 100%; margin-top: 18px; }
+    button:hover { opacity: .9; }
+    .progress-bg {
+      height: 13px;
+      background: rgba(255,255,255,.12);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 13px;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green), #14b8a6, var(--blue));
+      transition: width .35s ease;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .row:last-child { border-bottom: none; }
+    .summary { margin-top: 14px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.12); font-weight: 800; }
+    .tabs { display: flex; gap: 10px; margin: 18px 0; flex-wrap: wrap; }
+    .tab { background: rgba(255,255,255,.1); }
+    .tab.active { background: var(--green); }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .record-item { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+    .record-item:last-child { border-bottom: none; }
+    canvas { max-height: 300px; }
+    .pill { display: inline-block; padding: 4px 9px; border-radius: 999px; background: rgba(255,255,255,.12); color: #cbd5e1; font-size: 12px; }
+    @media (max-width: 1000px) { .grid { grid-template-columns: repeat(2,1fr); } .two-col { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) { body { padding: 14px; } .grid { grid-template-columns: 1fr; } .topbar { align-items: flex-start; flex-direction: column; } .actions { width:100%; } .actions button { flex: 1; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="login-card" id="loginCard">
+      <h1>財富自由 Dashboard v2.0</h1>
+      <p class="muted">登入後，資料會依 Email 儲存在這台瀏覽器。</p>
+      <label>Email</label>
+      <input id="email" type="email" placeholder="your@email.com" />
+      <label>密碼</label>
+      <input id="password" type="password" placeholder="請輸入密碼" />
+      <button class="full" onclick="login()">登入 / 建立帳戶</button>
+      <p class="muted">提醒：這是純前端版本，不是真正雲端登入。若要跨裝置同步，下一版可接 Firebase。</p>
+    </section>
+
+    <main class="dashboard" id="dashboard">
+      <div class="topbar">
+        <div class="title-wrap">
+          <h1>財富自由 Dashboard v2.0</h1>
+          <p id="userText">資產、負債、現金流、圖表、月紀錄</p>
+        </div>
+        <div class="actions">
+          <button class="secondary" onclick="exportData()">匯出 JSON</button>
+          <button class="secondary" onclick="document.getElementById('importFile').click()">匯入 JSON</button>
+          <input id="importFile" type="file" accept="application/json" style="display:none" onchange="importData(event)" />
+          <button class="danger" onclick="logout()">登出</button>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card"><h2>淨資產</h2><div class="big" id="netWorthText">NT$0</div><p class="muted">總資產 - 總負債</p></div>
+        <div class="card"><h2>FIRE 進度</h2><div class="big green" id="firePercentText">0%</div><p class="muted" id="fireTargetText">目標 NT$0</p><div class="progress-bg"><div class="progress-bar" id="fireProgressBar"></div></div></div>
+        <div class="card"><h2>每月現金流</h2><div class="big" id="cashFlowText">NT$0</div><p class="muted">月收入 - 月支出</p></div>
+        <div class="card"><h2>被動收入覆蓋率</h2><div class="big green" id="passiveCoverageText">0%</div><p class="muted">被動收入 / 月支出</p><div class="progress-bg"><div class="progress-bar" id="passiveProgressBar"></div></div></div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" onclick="showPanel('overview', this)">總覽</button>
+        <button class="tab" onclick="showPanel('input', this)">資料輸入</button>
+        <button class="tab" onclick="showPanel('records', this)">月紀錄</button>
+        <button class="tab" onclick="showPanel('charts', this)">圖表分析</button>
+      </div>
+
+      <section id="overview" class="panel active">
+        <div class="grid">
+          <div class="card"><h2>總資產</h2><div class="big blue" id="totalAssetsText">NT$0</div><p class="muted">股票、現金、房地產、其他</p></div>
+          <div class="card"><h2>總負債</h2><div class="big red" id="totalDebtText">NT$0</div><p class="muted" id="debtRatioText">負債比 0%</p></div>
+          <div class="card"><h2>達成預估</h2><div class="big yellow" id="yearsText">--</div><p class="muted" id="fireDateText">預估達成日期 --</p></div>
+          <div class="card"><h2>距離目標還差</h2><div class="big" id="remainingText">NT$0</div><p class="muted">依目前淨資產計算</p></div>
+        </div>
+      </section>
+
+      <section id="input" class="panel">
+        <div class="two-col">
+          <div class="card"><h2>資產</h2>
+            <label>股票 / ETF</label><input id="assetStocks" type="text" inputmode="numeric" value="6,000,000" />
+            <label>現金 / 存款</label><input id="assetCash" type="text" inputmode="numeric" value="800,000" />
+            <label>房地產</label><input id="assetRealEstate" type="text" inputmode="numeric" value="3,000,000" />
+            <label>其他資產</label><input id="assetOther" type="text" inputmode="numeric" value="200,000" />
+            <div class="summary row"><span>總資產</span><span id="assetSummary">NT$0</span></div>
+          </div>
+          <div class="card"><h2>負債</h2>
+            <label>房貸</label><input id="debtMortgage" type="text" inputmode="numeric" value="2,300,000" />
+            <label>信貸</label><input id="debtLoan" type="text" inputmode="numeric" value="200,000" />
+            <label>車貸</label><input id="debtCar" type="text" inputmode="numeric" value="300,000" />
+            <label>信用卡</label><input id="debtCreditCard" type="text" inputmode="numeric" value="0" />
+            <div class="summary row"><span>總負債</span><span id="debtSummary">NT$0</span></div>
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="card"><h2>每月收入</h2>
+            <label>薪水</label><input id="incomeSalary" type="text" inputmode="numeric" value="85,000" />
+            <label>租金收入</label><input id="incomeRent" type="text" inputmode="numeric" value="18,000" />
+            <label>股息 / 利息</label><input id="incomeDividend" type="text" inputmode="numeric" value="26,000" />
+            <label>其他收入</label><input id="incomeOther" type="text" inputmode="numeric" value="5,000" />
+            <div class="summary row"><span>月收入</span><span id="incomeSummary">NT$0</span></div>
+          </div>
+          <div class="card"><h2>每月支出</h2>
+            <label>生活費</label><input id="expenseLiving" type="text" inputmode="numeric" value="30,000" />
+            <label>房貸 / 租金</label><input id="expenseHousing" type="text" inputmode="numeric" value="25,000" />
+            <label>保險</label><input id="expenseInsurance" type="text" inputmode="numeric" value="5,000" />
+            <label>娛樂 / 旅遊</label><input id="expenseFun" type="text" inputmode="numeric" value="8,000" />
+            <label>其他支出</label><input id="expenseOther" type="text" inputmode="numeric" value="6,000" />
+            <div class="summary row"><span>月支出</span><span id="expenseSummary">NT$0</span></div>
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="card"><h2>FIRE 設定</h2>
+            <label>財富自由目標金額</label><input id="fireTarget" type="text" inputmode="numeric" value="30,000,000" />
+            <label>每月投資金額</label><input id="monthlyInvestment" type="text" inputmode="numeric" value="40,000" />
+            <label>預估年化報酬率 %</label><input id="annualReturn" type="number" value="8" />
+          </div>
+          <div class="card"><h2>快速填入月紀錄</h2>
+            <p class="muted">把目前 Dashboard 數字帶入月紀錄表。</p>
+            <button class="full" onclick="prefillRecord()">使用目前數字建立紀錄</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="records" class="panel">
+        <div class="two-col">
+          <div class="card"><h2>新增月紀錄</h2>
+            <label>紀錄日期</label><input id="recordDate" type="date" />
+            <label>本月總資產</label><input id="recordAssets" type="text" inputmode="numeric" />
+            <label>本月總負債</label><input id="recordDebt" type="text" inputmode="numeric" />
+            <label>本月收入</label><input id="recordIncome" type="text" inputmode="numeric" />
+            <label>本月支出</label><input id="recordExpense" type="text" inputmode="numeric" />
+            <label>備註</label><textarea id="recordNote" placeholder="例如：加薪、買 ETF、繳房貸、旅遊支出..."></textarea>
+            <button class="full" onclick="saveRecord()">儲存紀錄</button>
+          </div>
+          <div class="card"><h2>歷史紀錄</h2><div id="recordList" class="summary"></div></div>
+        </div>
+      </section>
+
+      <section id="charts" class="panel">
+        <div class="two-col">
+          <div class="card"><h2>資產配置</h2><canvas id="assetChart"></canvas></div>
+          <div class="card"><h2>收入 vs 支出</h2><canvas id="cashflowChart"></canvas></div>
+        </div>
+        <div class="card" style="margin-top:16px"><h2>淨資產歷史曲線</h2><p class="muted">新增月紀錄後會自動產生趨勢圖。</p><canvas id="historyChart"></canvas></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    let currentUser = "";
+    let charts = {};
+
+    const moneyInputIds = [
+      "assetStocks","assetCash","assetRealEstate","assetOther",
+      "debtMortgage","debtLoan","debtCar","debtCreditCard",
+      "incomeSalary","incomeRent","incomeDividend","incomeOther",
+      "expenseLiving","expenseHousing","expenseInsurance","expenseFun","expenseOther",
+      "fireTarget","monthlyInvestment","recordAssets","recordDebt","recordIncome","recordExpense"
+    ];
+    const dashboardMoneyIds = moneyInputIds.filter(id => !id.startsWith("record"));
+
+    function parseMoneyValue(value) { return Number(String(value).replace(/,/g, "").replace(/[^\d.-]/g, "")) || 0; }
+    function num(id) { return parseMoneyValue(document.getElementById(id).value); }
+    function money(value) { return "NT$" + Math.round(value).toLocaleString("zh-TW"); }
+    function plainMoney(value) { return Math.round(value).toLocaleString("zh-TW"); }
+    function setText(id, value) { document.getElementById(id).textContent = value; }
+    function formatMoneyInput(input) {
+      const raw = input.value.replace(/,/g, "").replace(/[^\d]/g, "");
+      input.value = raw === "" ? "" : Number(raw).toLocaleString("zh-TW");
+    }
+
+    function showPanel(id, btn) {
+      document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+      btn.classList.add("active");
+      if (id === "charts") setTimeout(renderCharts, 50);
+    }
+
+    function login() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      if (!email || !password) return alert("請輸入 Email 和密碼");
+      currentUser = email;
+      localStorage.setItem("financeUser", email);
+      document.getElementById("loginCard").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
+      document.getElementById("userText").textContent = email + " 的財富自由進度";
+      loadSavedDashboard(); updateDashboard(); loadRecords(); renderCharts();
+    }
+    function logout() {
+      currentUser = ""; localStorage.removeItem("financeUser");
+      document.getElementById("dashboard").style.display = "none";
+      document.getElementById("loginCard").style.display = "block";
+    }
+    function getDashboardKey(){ return "financeDashboard_v2_" + currentUser; }
+    function getRecordsKey(){ return "financeRecords_v2_" + currentUser; }
+
+    function saveDashboard() {
+      if (!currentUser) return;
+      const data = {};
+      dashboardMoneyIds.forEach(id => data[id] = document.getElementById(id).value);
+      data.annualReturn = document.getElementById("annualReturn").value;
+      localStorage.setItem(getDashboardKey(), JSON.stringify(data));
+    }
+    function loadSavedDashboard() {
+      const data = JSON.parse(localStorage.getItem(getDashboardKey())) || {};
+      Object.keys(data).forEach(id => { const el = document.getElementById(id); if (el) el.value = data[id]; });
+      dashboardMoneyIds.forEach(id => { const el = document.getElementById(id); if (el.value) formatMoneyInput(el); });
+    }
+
+    function calcYearsToFire(current, target, monthlyInvestment, annualReturnPercent) {
+      if (current >= target) return 0;
+      if (monthlyInvestment <= 0 && annualReturnPercent <= 0) return null;
+      const monthlyRate = annualReturnPercent / 100 / 12;
+      let balance = current, months = 0;
+      while (balance < target && months < 1200) { balance = balance * (1 + monthlyRate) + monthlyInvestment; months++; }
+      return months >= 1200 ? null : months / 12;
+    }
+
+    function getSnapshot() {
+      const totalAssets = num("assetStocks") + num("assetCash") + num("assetRealEstate") + num("assetOther");
+      const totalDebt = num("debtMortgage") + num("debtLoan") + num("debtCar") + num("debtCreditCard");
+      const netWorth = totalAssets - totalDebt;
+      const totalIncome = num("incomeSalary") + num("incomeRent") + num("incomeDividend") + num("incomeOther");
+      const totalExpense = num("expenseLiving") + num("expenseHousing") + num("expenseInsurance") + num("expenseFun") + num("expenseOther");
+      const passiveIncome = num("incomeRent") + num("incomeDividend");
+      return { totalAssets, totalDebt, netWorth, totalIncome, totalExpense, passiveIncome };
+    }
+
+    function updateDashboard() {
+      const s = getSnapshot();
+      const cashFlow = s.totalIncome - s.totalExpense;
+      const fireTarget = num("fireTarget");
+      const monthlyInvestment = num("monthlyInvestment");
+      const annualReturn = Number(document.getElementById("annualReturn").value) || 0;
+      const firePercent = fireTarget > 0 ? Math.min(Math.max((s.netWorth / fireTarget) * 100, 0), 100) : 0;
+      const debtRatio = s.totalAssets > 0 ? (s.totalDebt / s.totalAssets) * 100 : 0;
+      const passiveCoverage = s.totalExpense > 0 ? Math.min((s.passiveIncome / s.totalExpense) * 100, 100) : 0;
+      const remaining = Math.max(fireTarget - s.netWorth, 0);
+      const years = calcYearsToFire(s.netWorth, fireTarget, monthlyInvestment, annualReturn);
+
+      setText("netWorthText", money(s.netWorth)); setText("firePercentText", firePercent.toFixed(1) + "%");
+      setText("fireTargetText", "目標 " + money(fireTarget)); setText("totalAssetsText", money(s.totalAssets));
+      setText("totalDebtText", money(s.totalDebt)); setText("debtRatioText", "負債比 " + debtRatio.toFixed(1) + "%");
+      setText("assetSummary", money(s.totalAssets)); setText("debtSummary", money(s.totalDebt));
+      setText("incomeSummary", money(s.totalIncome)); setText("expenseSummary", money(s.totalExpense));
+      setText("passiveCoverageText", passiveCoverage.toFixed(1) + "%"); setText("remainingText", money(remaining));
+
+      const cashFlowEl = document.getElementById("cashFlowText");
+      cashFlowEl.textContent = money(cashFlow); cashFlowEl.className = "big " + (cashFlow >= 0 ? "green" : "red");
+      document.getElementById("fireProgressBar").style.width = firePercent + "%";
+      document.getElementById("passiveProgressBar").style.width = passiveCoverage + "%";
+
+      if (years === null) { setText("yearsText", "無法估算"); setText("fireDateText", "請提高每月投資或年化報酬率"); }
+      else {
+        const totalMonths = Math.ceil(years * 12), y = Math.floor(totalMonths / 12), m = totalMonths % 12;
+        setText("yearsText", y + " 年 " + m + " 個月");
+        const date = new Date(); date.setMonth(date.getMonth() + totalMonths);
+        setText("fireDateText", "預估達成日期 " + date.getFullYear() + "/" + String(date.getMonth()+1).padStart(2,"0"));
+      }
+      saveDashboard(); renderCharts();
+    }
+
+    function prefillRecord() {
+      const s = getSnapshot();
+      document.getElementById("recordDate").valueAsDate = new Date();
+      document.getElementById("recordAssets").value = plainMoney(s.totalAssets);
+      document.getElementById("recordDebt").value = plainMoney(s.totalDebt);
+      document.getElementById("recordIncome").value = plainMoney(s.totalIncome);
+      document.getElementById("recordExpense").value = plainMoney(s.totalExpense);
+    }
+    function saveRecord() {
+      const record = {
+        id: Date.now(), date: document.getElementById("recordDate").value,
+        assets: document.getElementById("recordAssets").value, debt: document.getElementById("recordDebt").value,
+        income: document.getElementById("recordIncome").value, expense: document.getElementById("recordExpense").value,
+        note: document.getElementById("recordNote").value
+      };
+      if (!record.date) return alert("請選擇紀錄日期");
+      const records = JSON.parse(localStorage.getItem(getRecordsKey())) || [];
+      records.unshift(record); localStorage.setItem(getRecordsKey(), JSON.stringify(records));
+      ["recordDate","recordAssets","recordDebt","recordIncome","recordExpense","recordNote"].forEach(id => document.getElementById(id).value = "");
+      loadRecords(); renderCharts();
+    }
+    function deleteRecord(id) {
+      if (!confirm("確定刪除這筆紀錄？")) return;
+      let records = JSON.parse(localStorage.getItem(getRecordsKey())) || [];
+      records = records.filter(r => r.id !== id);
+      localStorage.setItem(getRecordsKey(), JSON.stringify(records)); loadRecords(); renderCharts();
+    }
+    function loadRecords() {
+      const records = JSON.parse(localStorage.getItem(getRecordsKey())) || [];
+      const list = document.getElementById("recordList");
+      if (!records.length) { list.innerHTML = "<div class='muted'>尚無紀錄。可以先按「使用目前數字建立紀錄」。</div>"; return; }
+      list.innerHTML = records.map(r => `
+        <div class="record-item">
+          <div class="row"><strong>${r.date}</strong><span class="pill">淨資產 ${money(parseMoneyValue(r.assets)-parseMoneyValue(r.debt))}</span></div>
+          <div class="row"><span>資產 ${r.assets || "0"}</span><span>負債 ${r.debt || "0"}</span></div>
+          <div class="row"><span>收入 ${r.income || "0"}</span><span>支出 ${r.expense || "0"}</span></div>
+          <p class="muted">${r.note || ""}</p>
+          <button class="danger" onclick="deleteRecord(${r.id})">刪除</button>
+        </div>`).join("");
+    }
+
+    function renderCharts() {
+      if (!document.getElementById("assetChart")) return;
+      const s = getSnapshot();
+      const make = (key, ctx, type, data, options={}) => { if (charts[key]) charts[key].destroy(); charts[key] = new Chart(ctx, { type, data, options }); };
+      make("asset", document.getElementById("assetChart"), "doughnut", {
+        labels: ["股票/ETF","現金","房地產","其他"], datasets: [{ data: [num("assetStocks"),num("assetCash"),num("assetRealEstate"),num("assetOther")] }]
+      });
+      make("cash", document.getElementById("cashflowChart"), "bar", {
+        labels: ["收入","支出","現金流"], datasets: [{ label: "每月金額", data: [s.totalIncome, s.totalExpense, s.totalIncome-s.totalExpense] }]
+      }, { scales: { y: { beginAtZero: true } } });
+      const records = (JSON.parse(localStorage.getItem(getRecordsKey())) || []).slice().reverse();
+      make("history", document.getElementById("historyChart"), "line", {
+        labels: records.map(r => r.date), datasets: [{ label: "淨資產", data: records.map(r => parseMoneyValue(r.assets)-parseMoneyValue(r.debt)), tension: .3 }]
+      }, { scales: { y: { beginAtZero: false } } });
+    }
+
+    function exportData() {
+      const payload = { dashboard: JSON.parse(localStorage.getItem(getDashboardKey())) || {}, records: JSON.parse(localStorage.getItem(getRecordsKey())) || [] };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "finance-dashboard-backup.json"; a.click(); URL.revokeObjectURL(a.href);
+    }
+    function importData(event) {
+      const file = event.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => { try {
+        const payload = JSON.parse(reader.result);
+        if (payload.dashboard) localStorage.setItem(getDashboardKey(), JSON.stringify(payload.dashboard));
+        if (payload.records) localStorage.setItem(getRecordsKey(), JSON.stringify(payload.records));
+        loadSavedDashboard(); updateDashboard(); loadRecords(); renderCharts(); alert("匯入完成");
+      } catch(e) { alert("JSON 檔案格式錯誤"); } };
+      reader.readAsText(file);
+    }
+
+    moneyInputIds.forEach(id => {
+      const input = document.getElementById(id);
+      input.addEventListener("input", () => { formatMoneyInput(input); if (!id.startsWith("record")) updateDashboard(); });
+      if (input.value) formatMoneyInput(input);
+    });
+    document.getElementById("annualReturn").addEventListener("input", updateDashboard);
+    window.addEventListener("load", () => {
+      const savedUser = localStorage.getItem("financeUser");
+      if (savedUser) { currentUser = savedUser; document.getElementById("loginCard").style.display = "none"; document.getElementById("dashboard").style.display = "block"; document.getElementById("userText").textContent = savedUser + " 的財富自由進度"; loadSavedDashboard(); updateDashboard(); loadRecords(); renderCharts(); }
+      else updateDashboard();
+    });
+  </script>
+</body>
+</html>
