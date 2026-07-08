@@ -1,21 +1,18 @@
-# FIRE OS 2.3
+# FIRE OS 2.4
 
-Bilingual UI Edition.
+Design System Edition.
 
-## New in 2.3
+## What is new
 
-- English / Traditional Chinese language switch
-- Language preference synced to Firestore settings
-- Fixed mobile bottom navigation visibility bug
-- More reliable PWA safe-area spacing on mobile
-- Updated UI labels, dialog labels, AI Coach text, and alerts for bilingual use
+- FIRE OS mobile-first design system
+- Deep green Apple Wallet inspired UI
+- Bilingual Traditional Chinese / English interface
+- Fixed bottom navigation with safe-area support
+- Net Worth hero card
+- FIRE Ring component
+- Wealth cards, timeline, assets, debt and settings screens
+- Firebase Google login and Firestore cloud sync retained
 
 ## Deploy
 
-Upload all files in this folder to the root of your GitHub Pages repository:
-
-- `index.html`
-- `manifest.json`
-- `service-worker.js`
-- `assets/`
-- `README.md`
+Upload all files in this folder to the GitHub repository root.
