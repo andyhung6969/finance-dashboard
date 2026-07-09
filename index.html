@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FIRE OS 2.3</title>
+  <title>FIRE OS 2.4</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="assets/css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,16 +14,18 @@
   <section id="loginView" class="login-shell">
     <div class="login-card glass">
       <div class="logo-mark">🔥</div>
-      <h1>FIRE OS 2.3</h1>
-      <p>Responsive UI Edition</p>
-      <button id="googleLoginBtn" class="primary-btn">使用 Google 登入</button>
-      <p class="tiny">桌機維持 Sidebar；手機改成下方漂浮浮標選單。</p>
+      <h1>FIRE OS 2.4</h1>
+      <p>LINE Login Edition</p>
+      <button id="lineLoginBtn" class="line-btn">使用 LINE 登入</button>
+      <div class="login-divider"><span></span><small>OR</small><span></span></div>
+      <button id="googleLoginBtn" class="primary-btn secondary-login">使用 Google 登入</button>
+      <p class="tiny">LINE Login + Google Login，登入後資料同步到 Firebase Firestore。</p>
     </div>
   </section>
 
   <main id="appView" class="app hidden">
     <aside class="sidebar glass desktop-only">
-      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.3</small></div>
+      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.4</small></div>
       <nav class="desktop-nav">
         <button class="nav active" data-page="dashboard">🏠 Dashboard</button>
         <button class="nav" data-page="assets">💰 Assets</button>

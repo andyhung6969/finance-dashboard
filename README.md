@@ -1,21 +1,26 @@
-# FIRE OS 2.3
+# FIRE OS 2.4
 
-Responsive UI Edition.
+LINE Login Edition.
 
-## 新增重點
+## New
 
-- 桌機版維持左側 Sidebar
-- 手機版改為下方漂浮玻璃浮標選單
-- 手機版單欄版面、觸控友善卡片與間距
-- 頁面切換加入淡入滑動動畫
-- 保留 2.2 的資料管理、Firestore 同步、PWA、JSON 備份
+- LINE Login button added as primary login.
+- Google Login remains as backup.
+- Firebase OIDC provider id: `oidc.oidc.line`.
+- Keeps FIRE OS 2.3 responsive desktop/mobile layout, PWA, Firestore sync, data management.
 
-## 部署
+## Deploy
 
-把以下檔案放到 GitHub repository 根目錄：
+Upload everything in this folder to the GitHub repository root:
 
 - index.html
 - manifest.json
 - service-worker.js
 - assets/
 - README.md
+
+## Firebase prerequisites
+
+- Google provider enabled.
+- OIDC provider enabled with provider ID `oidc.oidc.line`.
+- LINE Developers Callback URL set to `https://fire-dashboard-86bb9.firebaseapp.com/__/auth/handler`.
