@@ -1,19 +1,23 @@
-# FIRE OS 2.3.2 – Assets Redesign
+# FIRE OS 2.3.3 Demo Stable
 
-Assets-focused redesign with a mobile-first Net Worth app style.
+Internal demo stable build.
 
-## Highlights
+## Goals
 
-- Home dashboard redesign
-- Assets page redesign
-- Asset detail bottom sheet
-- Add asset bottom sheet
-- Portfolio donut / allocation UI
-- Debt overview
-- Bilingual Traditional Chinese / English
-- Firebase Google Login + Firestore sync
-- PWA files included
+- Keep HTML/CSS/JS + GitHub Pages + Firebase
+- Login should never block the demo UI
+- If Firestore fails, app falls back to Demo Mode
+- Home / Assets / Dashboard / Debt / Settings are visible after login
+- Assets and debts can be added or edited
 
 ## Deploy
 
-Upload all files in this folder to the root of your GitHub Pages repository.
+Upload all files to the GitHub repository root:
+
+- index.html
+- assets/
+- manifest.json
+- service-worker.js
+- README.md
+
+After deployment, open in an incognito/private window if the previous PWA cache is sticky.

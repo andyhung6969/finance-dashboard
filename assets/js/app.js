@@ -1,21 +1,172 @@
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-const firebaseConfig={apiKey:"AIzaSyB5jUo6VmTNTRtCfwWhkwwXLYv1dcTSSi4",authDomain:"fire-dashboard-86bb9.firebaseapp.com",projectId:"fire-dashboard-86bb9",storageBucket:"fire-dashboard-86bb9.firebasestorage.app",messagingSenderId:"153073679515",appId:"1:153073679515:web:f49de492d1e79109fd1a3e",measurementId:"G-T34VDEFP7J"};
-const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),provider=new GoogleAuthProvider();
-const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);let user=null,state=null,editingId=null,charts={};
-const i18n={zh:{'login.subtitle':'Assets Redesign · 用 Google 登入同步你的財務資料。','login.google':'使用 Google 登入','common.goodEvening':'GOOD EVENING','common.add':'新增','common.save':'儲存','common.delete':'刪除','common.logout':'登出','nav.home':'探索','nav.assets':'資產','nav.portfolio':'儀表','nav.debt':'負債','nav.settings':'設定','metrics.netWorth':'NET WORTH','metrics.assets':'總資產','metrics.totalAssets':'總資產','metrics.debt':'總負債','metrics.totalDebt':'總負債','metrics.investment':'投資','metrics.cash':'現金','metrics.realEstate':'不動產','assets.title':'我的資產','assets.todayChange':'今日變動','assets.list':'資產列表','portfolio.title':'儀表板','portfolio.allocation':'投資組合','debt.title':'我的負債','settings.title':'設定','settings.language':'語言','settings.currency':'主要幣別','ai.title':'AI 今日洞察','sheet.addAsset':'新增資產','fields.name':'名稱','fields.type':'類型','fields.value':'金額','fields.note':'備註'},en:{'login.subtitle':'Assets Redesign · Sign in with Google to sync your finance data.','login.google':'Continue with Google','common.goodEvening':'GOOD EVENING','common.add':'Add','common.save':'Save','common.delete':'Delete','common.logout':'Logout','nav.home':'Explore','nav.assets':'Assets','nav.portfolio':'Charts','nav.debt':'Debt','nav.settings':'Settings','metrics.netWorth':'NET WORTH','metrics.assets':'Assets','metrics.totalAssets':'Total Assets','metrics.debt':'Total Debt','metrics.totalDebt':'Total Debt','metrics.investment':'Investment','metrics.cash':'Cash','metrics.realEstate':'Real Estate','assets.title':'My Assets','assets.todayChange':'Today','assets.list':'Asset List','portfolio.title':'Dashboard','portfolio.allocation':'Portfolio','debt.title':'My Debt','settings.title':'Settings','settings.language':'Language','settings.currency':'Currency','ai.title':'AI Insight','sheet.addAsset':'Add Asset','fields.name':'Name','fields.type':'Type','fields.value':'Value','fields.note':'Note'}};
-const seed={settings:{lang:'zh'},assets:[{id:id(),name:'VOO',type:'investment',value:2300000,note:'Vanguard S&P 500 ETF'},{id:id(),name:'0050',type:'investment',value:1500000,note:'元大台灣50'},{id:id(),name:'現金資產',type:'cash',value:320000,note:'銀行 / 現金'},{id:id(),name:'房地產',type:'realEstate',value:3000000,note:'預售屋 / 房產'}],debts:[{id:id(),name:'房屋貸款',type:'mortgage',value:2300000,note:'Mortgage'}],history:[15200000,16000000,16800000,16600000,17100000,17200000,17800000],cashflow:{income:6000000,expense:3600000},fire:{goal:30000000}};
-function id(){return crypto.randomUUID()}function lang(){return state?.settings?.lang||localStorage.getItem('fireos_lang')||'zh'}function t(k){return i18n[lang()]?.[k]||i18n.zh[k]||k}function money(n){return 'NT$'+Math.round(Number(n)||0).toLocaleString('zh-TW')}function sum(a){return(a||[]).reduce((s,x)=>s+(Number(x.value)||0),0)}function save(){if(user&&state){state.updatedAt=serverTimestamp();return setDoc(doc(db,'users',user.uid),state,{merge:true})}}
-function translate(){document.documentElement.lang=lang()==='en'?'en':'zh-Hant';$$('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));$$('[data-lang]').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang()))}
-function totals(){const assets=sum(state.assets),debts=sum(state.debts),cash=sum(state.assets.filter(x=>x.type==='cash')),real=sum(state.assets.filter(x=>x.type==='realEstate')),invest=sum(state.assets.filter(x=>x.type==='investment'));return{assets,debts,net:assets-debts,cash,real,invest,fire:Math.min(100,Math.max(0,(assets-debts)/(state.fire?.goal||30000000)*100))}}
-function render(){translate();const c=totals();$('#homeTitle').textContent=lang()==='zh'?'Andy 👋':'Andy 👋';$('#homeNetWorth').textContent=money(c.net);$('#homeAssets').textContent=money(c.assets);$('#homeDebt').textContent=money(c.debts);$('#homeFire').textContent=c.fire.toFixed(0)+'%';$('#homeInvestments').textContent=money(c.invest);$('#homeCash').textContent=money(c.cash);$('#homeRealEstate').textContent=money(c.real);$('#homeAiMini').textContent=c.fire.toFixed(0)+'%';$('#homeDelta').textContent=(lang()==='zh'?'Cloud synced · 儲蓄率 ':'Cloud synced · Saving rate ')+(((state.cashflow.income-state.cashflow.expense)/state.cashflow.income*100)||0).toFixed(1)+'%';$('#assetsTotal').textContent=money(c.assets);$('#assetTodayChange').textContent='+32,000';$('#debtTotal').textContent=money(c.debts);$('#debtSummary').textContent=state.debts.length+(lang()==='zh'?' 筆':' item(s)');renderAssets();renderDebt();renderAi();renderCharts()}
-function renderAssets(){const colors=['#65e49b','#8bbcff','#f2a36b','#b38cff','#ff7e89','#9aa8a0'];const total=sum(state.assets)||1;$('#assetList').innerHTML=state.assets.map((a,i)=>`<article class="asset-card" data-asset="${a.id}"><div><h3>${a.name}</h3><p>${a.note||a.type}</p></div><strong>${money(a.value)}</strong></article>`).join('');$('#investmentList')&&( $('#investmentList').innerHTML=state.assets.filter(a=>a.type==='investment').map(a=>`<article class="asset-card"><div><h3>${a.name}</h3><p>${a.note||''}</p></div><strong>${money(a.value)}</strong></article>`).join(''));$('#assetStrip').innerHTML=state.assets.map((a,i)=>`<i style="background:${colors[i%colors.length]};flex:${Math.max(a.value/total*100,3)}"></i>`).join('');$('#assetLegend').innerHTML=state.assets.slice(0,6).map((a,i)=>`<span style="--dot:${colors[i%colors.length]}">${a.name} ${((a.value/total)*100).toFixed(0)}%</span>`).join('');$('#portfolioLegend').innerHTML=state.assets.slice(0,5).map((a,i)=>`<span style="--dot:${colors[i%colors.length]}"><b>${a.name}</b><em>${((a.value/total)*100).toFixed(1)}%</em></span>`).join('');$$('[data-asset]').forEach(el=>el.onclick=()=>openSheet(el.dataset.asset))}
-function renderDebt(){$('#debtList').innerHTML=state.debts.map(d=>`<article class="asset-card"><div><h3>${d.name}</h3><p>${d.note||d.type}</p></div><strong class="negative">-${money(d.value)}</strong></article>`).join('')}
-function renderAi(){const c=totals();const lines=lang()==='zh'?[`你的淨資產目前為 ${money(c.net)}，FIRE 進度 ${c.fire.toFixed(1)}%。`,`投資資產占總資產 ${c.assets?(c.invest/c.assets*100).toFixed(1):0}%，可以持續追蹤配置。`,`現金部位為 ${money(c.cash)}，可作為預備金安全墊。`]:[`Your net worth is ${money(c.net)}, FIRE progress ${c.fire.toFixed(1)}%.`,`Investments are ${c.assets?(c.invest/c.assets*100).toFixed(1):0}% of total assets.`,`Cash position is ${money(c.cash)} as your safety buffer.`];$('#aiInsights').innerHTML=lines.map(x=>`<div>${x}</div>`).join('')}
-function chart(key,el,type,data,opt={}){if(charts[key])charts[key].destroy();charts[key]=new Chart($(el),{type,data,options:opt})}function renderCharts(){const h=state.history||[];chart('trend','#assetTrendChart','line',{labels:h.map((_,i)=>i+1),datasets:[{data:h,borderWidth:4,tension:.35,pointRadius:3}]},{plugins:{legend:{display:false}},scales:{x:{display:false},y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'rgba(255,255,255,.5)'}}}});chart('portfolio','#portfolioChart','doughnut',{labels:state.assets.map(a=>a.name),datasets:[{data:state.assets.map(a=>a.value),borderWidth:0} ]},{cutout:'62%',plugins:{legend:{display:false}}})}
-function show(page){$$('.screen').forEach(s=>s.classList.toggle('active',s.id===page));$$('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page))}
-function openSheet(assetId=null){editing=assetId;const a=state.assets.find(x=>x.id===assetId)||{name:'',type:'investment',value:'',note:''};$('#assetName').value=a.name;$('#assetType').value=a.type;$('#assetValue').value=a.value;$('#assetNote').value=a.note||'';$('#deleteAssetBtn').classList.toggle('hidden',!assetId);$('#assetSheet').classList.remove('hidden');$('#sheetBackdrop').classList.remove('hidden')}let editing=null;function closeSheet(){$('#assetSheet').classList.add('hidden');$('#sheetBackdrop').classList.add('hidden');editing=null}
-function bind(){window.addEventListener('click',e=>{const page=e.target.closest('[data-page]')?.dataset.page;if(page)show(page);const lng=e.target.closest('[data-lang]')?.dataset.lang;if(lng){state.settings.lang=lng;localStorage.setItem('fireos_lang',lng);save();render()}if(e.target.closest('#loginBtn'))signInWithPopup(auth,provider);if(e.target.closest('#logoutBtn'))signOut(auth);if(e.target.closest('#fab')||e.target.closest('#addAssetTopBtn'))openSheet();if(e.target.closest('#closeSheet')||e.target.closest('#sheetBackdrop'))closeSheet();if(e.target.closest('#syncBtn')||e.target.closest('#refreshAssetsBtn'))render()});$('#assetForm').onsubmit=async e=>{e.preventDefault();const item={id:editing||id(),name:$('#assetName').value,type:$('#assetType').value,value:Number(String($('#assetValue').value).replace(/,/g,''))||0,note:$('#assetNote').value};if(editing){const idx=state.assets.findIndex(x=>x.id===editing);state.assets[idx]=item}else state.assets.unshift(item);await save();closeSheet();render()};$('#deleteAssetBtn').onclick=async()=>{if(editing){state.assets=state.assets.filter(x=>x.id!==editing);await save();closeSheet();render()}}}
-bind();onAuthStateChanged(auth,async u=>{if(!u){$('#login').classList.remove('hidden');$('#app').classList.add('hidden');return}user=u;$('#userEmail').textContent=u.email||'';const ref=doc(db,'users',u.uid);const snap=await getDoc(ref);state=snap.exists()?{...seed,...snap.data()}:{...seed,profile:{email:u.email,name:u.displayName}};state.settings={...seed.settings,...(state.settings||{}),lang:localStorage.getItem('fireos_lang')||state.settings?.lang||'zh'};await setDoc(ref,state,{merge:true});$('#login').classList.add('hidden');$('#app').classList.remove('hidden');render()});if('serviceWorker'in navigator)navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB5jUo6VmTNTRtCfwWhkwwXLYv1dcTSSi4",
+  authDomain: "fire-dashboard-86bb9.firebaseapp.com",
+  projectId: "fire-dashboard-86bb9",
+  storageBucket: "fire-dashboard-86bb9.firebasestorage.app",
+  messagingSenderId: "153073679515",
+  appId: "1:153073679515:web:f49de492d1e79109fd1a3e"
+};
+
+let firebaseApp, auth, db;
+try {
+  firebaseApp = initializeApp(firebaseConfig);
+  auth = getAuth(firebaseApp);
+  db = getFirestore(firebaseApp);
+} catch (e) {
+  console.warn("Firebase init failed", e);
+}
+
+const $ = id => document.getElementById(id);
+const $$ = q => [...document.querySelectorAll(q)];
+const fmt = n => "NT$" + Math.round(Number(n) || 0).toLocaleString("zh-TW");
+const raw = v => Number(String(v || "").replace(/,/g, "").replace(/[^\d.-]/g, "")) || 0;
+const uid = () => crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random());
+
+let user = null;
+let mode = "demo";
+let editing = null;
+let addingDebt = false;
+let state = {
+  language: "zh",
+  cashflow: { income: 6000000, expense: 3600000 },
+  assets: [
+    { id: uid(), name: "TWD", type: "現金", value: 23000000 },
+    { id: uid(), name: "VOO", type: "ETF", value: 2300000 },
+    { id: uid(), name: "0050", type: "ETF", value: 1500000 },
+    { id: uid(), name: "房地產", type: "不動產", value: 146000000 },
+    { id: uid(), name: "台股", type: "股票", value: 9612844 }
+  ],
+  debts: [ { id: uid(), name: "房屋貸款", type: "房貸", value: 2300000 } ]
+};
+
+function totals(){
+  const assets = state.assets.reduce((s,x)=>s+Number(x.value||0),0);
+  const debt = state.debts.reduce((s,x)=>s+Number(x.value||0),0);
+  const net = assets - debt;
+  const cf = (state.cashflow?.income||0) - (state.cashflow?.expense||0);
+  const saving = state.cashflow?.income ? cf / state.cashflow.income * 100 : 0;
+  const leverage = debt ? assets / Math.max(debt,1) : 0;
+  return { assets, debt, net, cf, saving, leverage };
+}
+
+function render(){
+  const t = totals();
+  $("homeNetWorth").textContent = fmt(t.net);
+  $("homeAssets").textContent = fmt(t.assets);
+  $("homeDebt").textContent = fmt(t.debt);
+  $("homeLeverage").textContent = t.leverage ? t.leverage.toFixed(2) + "x" : "0.00x";
+  $("incomeText").textContent = fmt(state.cashflow.income);
+  $("expenseText").textContent = fmt(state.cashflow.expense);
+  $("savingRateText").textContent = t.saving.toFixed(0) + "%";
+  $("cashflowSummary").textContent = "年度自由現金流 " + fmt(t.cf);
+  $("assetHeroTotal").textContent = fmt(t.assets);
+  $("assetCount").textContent = state.assets.length + " 筆資產";
+  $("dashNetWorth").textContent = fmt(t.net);
+  $("dashAssets").textContent = fmt(t.assets);
+  $("dashDebt").textContent = fmt(t.debt);
+  $("dashLev").textContent = t.leverage ? t.leverage.toFixed(2) + "x" : "0.00x";
+  $("debtHeroTotal").textContent = fmt(t.debt);
+  $("debtDesc").textContent = state.debts.map(d=>d.name).join("、") || "尚無負債";
+  $("syncBadge").textContent = mode === "cloud" ? "Cloud Synced" : "Demo Mode";
+  $("syncStatusText").textContent = mode === "cloud" ? "Cloud Synced" : "Demo Mode";
+
+  const colors = ["#83bfff", "#67d99a", "#f0a06a", "#9b7bd7", "#ef7e87", "#748079"];
+  const total = Math.max(t.assets, 1);
+  $("assetSplit").innerHTML = state.assets.slice(0,6).map((a,i)=>`<i style="background:${colors[i%colors.length]};flex:${Math.max(a.value/total*100,2)}"></i>`).join("");
+  $("assetList").innerHTML = state.assets.map((a,i)=>assetHTML(a, colors[i%colors.length], false)).join("");
+  $("debtList").innerHTML = state.debts.map(a=>assetHTML(a, "#ef7e87", true)).join("");
+  $("portfolioLegend").innerHTML = state.assets.slice().sort((a,b)=>b.value-a.value).slice(0,5).map((a,i)=>`<span><b style="color:${colors[i%colors.length]}">${a.name}</b><strong>${(a.value/total*100).toFixed(1)}%</strong></span>`).join("");
+  saveLocal();
+}
+
+function assetHTML(a,color,isDebt){
+  return `<article class="asset-item" data-id="${a.id}" data-kind="${isDebt?'debt':'asset'}"><div class="badge" style="color:${color}">${isDebt?'▰':'●'}</div><div><h3>${a.name}</h3><p>${a.type}</p></div><strong class="${isDebt?'red':''}">${isDebt?'- ':''}${fmt(a.value)}</strong></article>`;
+}
+
+function show(page){
+  $$(".page").forEach(p=>p.classList.toggle("active", p.id === page));
+  $$(".bottom-nav button").forEach(b=>b.classList.toggle("active", b.dataset.page === page));
+}
+
+function openSheet(item=null, debt=false){
+  editing = item;
+  addingDebt = debt;
+  $("sheetTitle").textContent = item ? "編輯" : (debt ? "新增負債" : "新增資產");
+  $("itemName").value = item?.name || "";
+  $("itemType").value = item?.type || (debt ? "負債" : "現金");
+  $("itemValue").value = item?.value || "";
+  $("assetDialog").showModal();
+}
+
+async function persist(){
+  render();
+  if(mode !== "cloud" || !user || !db) return;
+  try {
+    await setDoc(doc(db, "users", user.uid, "app", "fireos-233"), state, { merge:true });
+  } catch(e) {
+    console.warn("Firestore save failed", e);
+    mode = "demo";
+    render();
+  }
+}
+
+function saveLocal(){ localStorage.setItem("fireos_233_demo", JSON.stringify(state)); }
+function loadLocal(){ try { const d = JSON.parse(localStorage.getItem("fireos_233_demo")); if(d?.assets) state = d; } catch{} }
+
+async function enterApp(u=null){
+  user = u;
+  mode = u ? "cloud" : "demo";
+  $("loginView").classList.add("hidden");
+  $("appView").classList.remove("hidden");
+  loadLocal();
+  if(u && db){
+    try{
+      const snap = await getDoc(doc(db, "users", u.uid, "app", "fireos-233"));
+      if(snap.exists()) state = snap.data();
+      else await setDoc(doc(db, "users", u.uid, "app", "fireos-233"), state);
+      mode = "cloud";
+    }catch(e){
+      console.warn("Firestore load failed, entering demo mode", e);
+      mode = "demo";
+    }
+  }
+  render();
+}
+
+$("googleLoginBtn").onclick = async () => {
+  if(!auth) return enterApp(null);
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch(e){ alert("Google 登入失敗，先進入 Demo Mode。\n" + (e.message || e)); enterApp(null); }
+};
+$("demoBtn").onclick = () => enterApp(null);
+$("logoutBtn").onclick = async () => { if(auth) await signOut(auth); location.reload(); };
+$("fabBtn").onclick = () => openSheet(null, $("debtPage").classList.contains("active"));
+$("addAssetBtn").onclick = () => openSheet(null, false);
+$("addDebtBtn").onclick = () => openSheet(null, true);
+$("resetDemoBtn").onclick = () => { localStorage.removeItem("fireos_233_demo"); location.reload(); };
+$("refreshBtn").onclick = render;
+$("languageSelect").onchange = e => state.language = e.target.value;
+
+$$("[data-page]").forEach(btn => btn.onclick = () => show(btn.dataset.page));
+$$("[data-go]").forEach(row => row.onclick = () => show(row.dataset.go));
+$("assetList").onclick = e => { const card = e.target.closest(".asset-item"); if(!card) return; openSheet(state.assets.find(a=>a.id===card.dataset.id), false); };
+$("debtList").onclick = e => { const card = e.target.closest(".asset-item"); if(!card) return; openSheet(state.debts.find(a=>a.id===card.dataset.id), true); };
+
+$("assetForm").onsubmit = async e => {
+  e.preventDefault();
+  const item = editing || { id: uid() };
+  item.name = $("itemName").value.trim();
+  item.type = $("itemType").value;
+  item.value = raw($("itemValue").value);
+  const arr = addingDebt ? state.debts : state.assets;
+  if(!editing) arr.unshift(item);
+  await persist();
+  $("assetDialog").close();
+};
+
+if(auth){ onAuthStateChanged(auth, u => { if(u) enterApp(u); }); }
+if("serviceWorker" in navigator){ navigator.serviceWorker.register("./service-worker.js").catch(()=>{}); }
