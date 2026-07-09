@@ -1,17 +1,14 @@
-# FIRE OS 2.2
+# FIRE OS 2.3
 
-Data Management Edition.
+Responsive UI Edition.
 
 ## 新增重點
 
-- Assets / Liabilities 新增、編輯、刪除
-- Investments 新增、編輯、刪除，並計算成本、現值、股息、報酬率
-- Cashflow 收入與支出管理
-- Journal 財務日誌 Timeline
-- Dashboard 從 Firestore 即時計算
-- 月度淨資產快照
-- JSON 匯出 / 匯入備份
-- PWA：可安裝到手機主畫面
+- 桌機版維持左側 Sidebar
+- 手機版改為下方漂浮玻璃浮標選單
+- 手機版單欄版面、觸控友善卡片與間距
+- 頁面切換加入淡入滑動動畫
+- 保留 2.2 的資料管理、Firestore 同步、PWA、JSON 備份
 
 ## 部署
 
@@ -22,4 +19,3 @@ Data Management Edition.
 - service-worker.js
 - assets/
 - README.md
-

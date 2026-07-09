@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FIRE OS 2.2</title>
+  <title>FIRE OS 2.3</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="assets/css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,25 +14,25 @@
   <section id="loginView" class="login-shell">
     <div class="login-card glass">
       <div class="logo-mark">🔥</div>
-      <h1>FIRE OS 2.2</h1>
-      <p>Data Management Edition</p>
+      <h1>FIRE OS 2.3</h1>
+      <p>Responsive UI Edition</p>
       <button id="googleLoginBtn" class="primary-btn">使用 Google 登入</button>
-      <p class="tiny">登入後資料會同步到 Firebase Firestore。</p>
+      <p class="tiny">桌機維持 Sidebar；手機改成下方漂浮浮標選單。</p>
     </div>
   </section>
 
   <main id="appView" class="app hidden">
-    <aside class="sidebar glass">
-      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.2</small></div>
-      <nav>
+    <aside class="sidebar glass desktop-only">
+      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.3</small></div>
+      <nav class="desktop-nav">
         <button class="nav active" data-page="dashboard">🏠 Dashboard</button>
         <button class="nav" data-page="assets">💰 Assets</button>
-        <button class="nav" data-page="investments">📈 Investments</button>
-        <button class="nav" data-page="cashflow">💵 Cashflow</button>
+        <button class="nav" data-page="investments">📈 投資</button>
+        <button class="nav" data-page="cashflow">💵 現金流</button>
         <button class="nav" data-page="fire">🎯 FIRE</button>
-        <button class="nav" data-page="journal">📅 Journal</button>
+        <button class="nav" data-page="journal">📅 旅程</button>
         <button class="nav" data-page="ai">🤖 AI Coach</button>
-        <button class="nav" data-page="settings">⚙️ Settings</button>
+        <button class="nav" data-page="settings">⚙️ 設定</button>
       </nav>
       <div class="profile-mini">
         <img id="userPhoto" alt="user" />
@@ -42,9 +42,12 @@
     </aside>
 
     <section class="content">
-      <header class="topbar">
+      <header class="topbar glass mobile-topbar">
         <div><p id="greeting" class="eyebrow">Good Evening</p><h1 id="pageTitle">Dashboard</h1></div>
-        <div class="top-actions"><button id="installBtn" class="ghost-btn small hidden">安裝 App</button><button id="saveBtn" class="primary-btn small">同步資料</button></div>
+        <div class="top-actions">
+          <button id="installBtn" class="ghost-btn small hidden">安裝 App</button>
+          <button id="saveBtn" class="primary-btn small">同步</button>
+        </div>
       </header>
 
       <section id="dashboard" class="page active-page">
@@ -65,19 +68,19 @@
       </section>
 
       <section id="assets" class="page">
-        <div class="section-head"><h2>資產管理</h2><div class="inline-actions"><button class="primary-btn small" id="addAssetBtn">新增資產</button><button class="ghost-btn small" id="addLiabilityBtn">新增負債</button></div></div>
+        <div class="section-head"><h2>Assets</h2><div class="inline-actions"><button class="primary-btn small" id="addAssetBtn">新增資產</button><button class="ghost-btn small" id="addLiabilityBtn">新增負債</button></div></div>
         <div class="two-col no-top"><div class="card glass"><h3>資產</h3><div id="assetList" class="list"></div></div><div class="card glass"><h3>負債</h3><div id="liabilityList" class="list"></div></div></div>
       </section>
 
       <section id="investments" class="page">
-        <div class="section-head"><h2>投資組合</h2><button class="primary-btn small" id="addInvestmentBtn">新增投資</button></div>
+        <div class="section-head"><h2>投資</h2><button class="primary-btn small" id="addInvestmentBtn">新增投資</button></div>
         <div id="investmentList" class="list"></div>
       </section>
 
       <section id="cashflow" class="page">
         <div class="two-col">
-          <div class="card glass"><h3>每月收入</h3><div id="incomeList"></div><button class="ghost-btn full" id="addIncomeBtn">新增收入</button></div>
-          <div class="card glass"><h3>每月支出</h3><div id="expenseList"></div><button class="ghost-btn full" id="addExpenseBtn">新增支出</button></div>
+          <div class="card glass"><h3>每月收入</h3><div id="incomeList" class="list"></div><button class="ghost-btn full" id="addIncomeBtn">新增收入</button></div>
+          <div class="card glass"><h3>每月支出</h3><div id="expenseList" class="list"></div><button class="ghost-btn full" id="addExpenseBtn">新增支出</button></div>
         </div>
       </section>
 
@@ -93,7 +96,7 @@
       </section>
 
       <section id="journal" class="page">
-        <div class="section-head"><h2>財務日誌</h2><div class="inline-actions"><button class="ghost-btn small" id="snapshotBtn">記錄本月快照</button><button class="primary-btn small" id="addJournalBtn">新增日誌</button></div></div>
+        <div class="section-head"><h2>旅程</h2><div class="inline-actions"><button class="ghost-btn small" id="snapshotBtn">記錄本月快照</button><button class="primary-btn small" id="addJournalBtn">新增日誌</button></div></div>
         <div id="journalList" class="timeline"></div>
       </section>
 
@@ -113,6 +116,17 @@
         </div>
       </section>
     </section>
+
+    <nav class="mobile-floating-nav mobile-only" aria-label="Mobile Navigation">
+      <button class="mobile-nav-item active" data-page="dashboard"><span>🏠</span><small>Dashboard</small></button>
+      <button class="mobile-nav-item" data-page="assets"><span>💰</span><small>Assets</small></button>
+      <button class="mobile-nav-item" data-page="investments"><span>📈</span><small>投資</small></button>
+      <button class="mobile-nav-item" data-page="cashflow"><span>💵</span><small>現金流</small></button>
+      <button class="mobile-nav-item" data-page="fire"><span>🎯</span><small>FIRE</small></button>
+      <button class="mobile-nav-item" data-page="journal"><span>📅</span><small>旅程</small></button>
+      <button class="mobile-nav-item" data-page="ai"><span>🤖</span><small>AI</small></button>
+      <button class="mobile-nav-item" data-page="settings"><span>⚙️</span><small>設定</small></button>
+    </nav>
   </main>
 
   <dialog id="editDialog" class="glass dialog">

@@ -1,12 +1,1 @@
-{
-  "name": "FIRE OS",
-  "short_name": "FIRE OS",
-  "description": "Personal Wealth Operating System",
-  "start_url": "./index.html",
-  "scope": "./",
-  "display": "standalone",
-  "background_color": "#0b1020",
-  "theme_color": "#22c55e",
-  "orientation": "portrait-primary",
-  "icons": []
-}
+{"name":"FIRE OS","short_name":"FIRE OS","description":"Personal Wealth Operating System","start_url":"./index.html","scope":"./","display":"standalone","background_color":"#08111f","theme_color":"#27e58f","orientation":"portrait-primary","icons":[]}
