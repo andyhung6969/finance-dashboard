@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FIRE OS 2.3.1</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="orb orb-a"></div><div class="orb orb-b"></div>
+
+  <section id="loginView" class="login-shell">
+    <div class="login-card glass">
+      <div class="logo-mark">🔥</div>
+      <h1>FIRE OS 2.3.1</h1>
+      <p>Bilingual Mobile UI Edition</p>
+      <button id="googleLoginBtn" class="primary-btn" data-i18n="auth.google">使用 Google 登入</button>
+      <p class="tiny" data-i18n="auth.note">登入後資料會同步到 Firebase Firestore。</p>
+    </div>
+  </section>
+
+  <main id="appView" class="app hidden">
+    <aside class="sidebar glass">
+      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.3.1</small></div>
+      <nav>
+        <button class="nav active" data-page="dashboard"><span class="nav-ico">🏠</span><span class="nav-text" data-i18n="nav.dashboard">Dashboard</span></button>
+        <button class="nav" data-page="assets"><span class="nav-ico">💰</span><span class="nav-text" data-i18n="nav.assets">Assets</span></button>
+        <button class="nav" data-page="investments"><span class="nav-ico">📈</span><span class="nav-text" data-i18n="nav.investments">Investments</span></button>
+        <button class="nav" data-page="cashflow"><span class="nav-ico">💵</span><span class="nav-text" data-i18n="nav.cashflow">Cashflow</span></button>
+        <button class="nav" data-page="fire"><span class="nav-ico">🎯</span><span class="nav-text" data-i18n="nav.fire">FIRE</span></button>
+        <button class="nav" data-page="journal"><span class="nav-ico">📅</span><span class="nav-text" data-i18n="nav.journal">Journal</span></button>
+        <button class="nav" data-page="ai"><span class="nav-ico">🤖</span><span class="nav-text" data-i18n="nav.ai">AI Coach</span></button>
+        <button class="nav" data-page="settings"><span class="nav-ico">⚙️</span><span class="nav-text" data-i18n="nav.settings">Settings</span></button>
+      </nav>
+      <div class="profile-mini">
+        <img id="userPhoto" alt="user" />
+        <div><strong id="userName">User</strong><span id="userEmail"></span></div>
+      </div>
+      <button id="logoutBtn" class="ghost-btn" data-i18n="common.logout">登出</button>
+    </aside>
+
+    <section class="content">
+      <header class="topbar">
+        <div><p id="greeting" class="eyebrow">Good Evening</p><h1 id="pageTitle">Dashboard</h1></div>
+        <div class="top-actions"><select id="languageSelectTop" class="language-select small"><option value="zh">中文</option><option value="en">English</option></select><button id="installBtn" class="ghost-btn small hidden" data-i18n="common.install">安裝 App</button><button id="saveBtn" class="primary-btn small" data-i18n="common.sync">同步資料</button></div>
+      </header>
+
+      <section id="dashboard" class="page active-page dashboard-wallet">
+        <div class="wallet-toolbar">
+          <button class="circle-btn" aria-label="more">•••</button>
+          <button class="circle-btn" id="languageRoundBtn" aria-label="language">🌐</button>
+          <button class="circle-btn active" aria-label="dashboard">▥</button>
+        </div>
+
+        <div class="wealth-card glass">
+          <div class="wealth-head">
+            <div>
+              <p class="caption" data-i18n="dashboard.netWorth">淨資產 (NETWORTH)</p>
+              <h2 id="netWorthHero">NT$0</h2>
+            </div>
+            <span class="eye-mark">◉</span>
+          </div>
+
+          <div class="seg-row">
+            <span class="mini-icon">⌁</span>
+            <span data-i18n="dashboard.netWorth">淨資產 (TWD)</span>
+            <button class="mini-chip">↔ %</button>
+            <button class="mini-chip ghost">☝</button>
+            <div class="range-tabs"><span>近月</span><strong>今年</strong><span>全部</span></div>
+          </div>
+
+          <div class="chart-wrap">
+            <div class="chart-note">
+              <span>今年變動</span>
+              <strong id="yearChangeText" class="positive">+0 0%</strong>
+            </div>
+            <canvas id="netWorthChart"></canvas>
+          </div>
+
+          <div class="exposure-row">
+            <span>排除現金曝險</span>
+            <strong id="exCashExposure">NT$0</strong>
+            <em id="todayDelta" class="negative">今日 ▼ -$0</em>
+          </div>
+
+          <div class="allocation-strip" id="allocationStrip"></div>
+          <div class="allocation-legend" id="allocationLegend"></div>
+
+          <div class="wealth-stats">
+            <div><span>💼 總資產</span><strong id="kpiAssets">NT$0</strong></div>
+            <div><span>🪙 投資槓桿</span><strong id="leverageText">0.00x</strong></div>
+            <div><span>💳 總負債</span><strong id="kpiDebt" class="negative">NT$0</strong></div>
+          </div>
+        </div>
+
+        <div class="portfolio-card glass">
+          <div class="section-title-line">
+            <h3>◔ 投資組合</h3>
+            <button class="detail-pill">☷ 明細⌄</button>
+          </div>
+          <div class="portfolio-body">
+            <canvas id="assetChart"></canvas>
+            <div id="portfolioLegend" class="portfolio-legend"></div>
+          </div>
+        </div>
+
+        <div class="kpi-grid compact-grid">
+          <div class="card glass"><p data-i18n="dashboard.monthlyCashflow">Monthly Cashflow</p><h3 id="kpiCashflow">NT$0</h3></div>
+          <div class="card glass"><p data-i18n="dashboard.passiveCoverage">Passive Coverage</p><h3 id="kpiPassive">0%</h3></div>
+          <div class="card glass"><p>FIRE</p><h3 id="fireRing">0%</h3></div>
+          <div class="card glass"><p>Insight</p><h3 id="heroDelta">Cloud synced</h3></div>
+        </div>
+      </section>
+
+      <section id="assets" class="page">
+        <div class="section-head"><h2 data-i18n="assets.title">資產管理</h2><div class="inline-actions"><button class="primary-btn small" id="addAssetBtn" data-i18n="assets.addAsset">新增資產</button><button class="ghost-btn small" id="addLiabilityBtn" data-i18n="assets.addLiability">新增負債</button></div></div>
+        <div class="two-col no-top"><div class="card glass"><h3 data-i18n="assets.assets">資產</h3><div id="assetList" class="list"></div></div><div class="card glass"><h3 data-i18n="assets.liabilities">負債</h3><div id="liabilityList" class="list"></div></div></div>
+      </section>
+
+      <section id="investments" class="page">
+        <div class="section-head"><h2 data-i18n="investments.title">投資組合</h2><button class="primary-btn small" id="addInvestmentBtn" data-i18n="investments.add">新增投資</button></div>
+        <div id="investmentList" class="list"></div>
+      </section>
+
+      <section id="cashflow" class="page">
+        <div class="two-col">
+          <div class="card glass"><h3 data-i18n="cashflow.income">每月收入</h3><div id="incomeList"></div><button class="ghost-btn full" id="addIncomeBtn" data-i18n="cashflow.addIncome">新增收入</button></div>
+          <div class="card glass"><h3 data-i18n="cashflow.expenses">每月支出</h3><div id="expenseList"></div><button class="ghost-btn full" id="addExpenseBtn" data-i18n="cashflow.addExpense">新增支出</button></div>
+        </div>
+      </section>
+
+      <section id="fire" class="page">
+        <div class="card glass fire-card">
+          <h2 data-i18n="fire.title">FIRE 模擬器</h2>
+          <label data-i18n="fire.goal">FIRE 目標金額</label><input id="fireGoalInput" class="money-input" />
+          <label data-i18n="fire.monthlyInvestment">每月投資金額</label><input id="monthlyInvestInput" class="money-input" />
+          <label data-i18n="fire.annualReturn">年化報酬率 (%)</label><input id="returnInput" type="number" />
+          <div class="summary-line"><span data-i18n="fire.eta">預估達成</span><strong id="fireEta">--</strong></div>
+          <div class="progress"><i id="fireProgress"></i></div>
+        </div>
+      </section>
+
+      <section id="journal" class="page">
+        <div class="section-head"><h2 data-i18n="journal.title">財務日誌</h2><div class="inline-actions"><button class="ghost-btn small" id="snapshotBtn" data-i18n="journal.snapshot">記錄本月快照</button><button class="primary-btn small" id="addJournalBtn" data-i18n="journal.add">新增日誌</button></div></div>
+        <div id="journalList" class="timeline"></div>
+      </section>
+
+      <section id="ai" class="page">
+        <div class="card glass"><h2 data-i18n="ai.title">AI Coach</h2><div id="aiInsights" class="insights"></div></div>
+      </section>
+
+      <section id="settings" class="page">
+        <div class="card glass settings-card">
+          <h2 data-i18n="settings.title">設定</h2>
+          <label data-i18n="settings.displayName">顯示名稱</label><input id="displayNameInput" />
+          <label data-i18n="settings.language">語言</label><select id="languageSelect"><option value="zh">中文</option><option value="en">English</option></select>
+          <label data-i18n="settings.emergencyMonths">預備金目標（月支出倍數）</label><input id="emergencyMonthsInput" type="number" />
+          <button id="exportBtn" class="ghost-btn full" data-i18n="settings.export">匯出 JSON 備份</button>
+          <button id="importBtn" class="ghost-btn full" data-i18n="settings.import">匯入 JSON 備份</button>
+          <input id="importFile" type="file" accept="application/json" class="hidden" />
+          <button id="resetDemoBtn" class="ghost-btn full danger" data-i18n="settings.reset">重置為示範資料</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <dialog id="editDialog" class="glass dialog">
+    <form method="dialog" id="editForm">
+      <h3 id="dialogTitle">新增</h3>
+      <div id="dialogFields"></div>
+      <div class="dialog-actions"><button type="button" id="deleteDialogBtn" class="ghost-btn danger hidden" data-i18n="common.delete">刪除</button><span class="spacer"></span><button class="ghost-btn" value="cancel" data-i18n="common.cancel">取消</button><button id="dialogSave" class="primary-btn" value="default" data-i18n="common.save">儲存</button></div>
+    </form>
+  </dialog>
+
+  <script type="module" src="assets/js/app.js"></script>
+</body>
+</html>
