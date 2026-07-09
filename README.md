@@ -1,13 +1,12 @@
-# FIRE OS 2.5.1
+# FIRE OS 2.5.1a Mobile LINE Safe Patch
 
-Mobile Logout Fix.
+短期穩定版：
 
-## Changed
+- 手機版停用 LINE Login，改顯示提示
+- 手機版請先使用 Google Login
+- 桌機版保留 LINE Login
+- 其他功能不動
 
-- 手機版右上角新增「登出」按鈕。
-- 桌機版 Sidebar 與其他功能完全不動。
-- 保留 LINE Login、Google Login、Account Linking、Firestore 同步。
+Known Issue:
 
-## Deploy
-
-解壓縮後，把所有檔案覆蓋到 GitHub repository 根目錄。
+- Mobile LINE Login 之後改用 LIFF。
