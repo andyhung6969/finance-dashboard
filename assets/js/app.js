@@ -122,6 +122,64 @@ function exportData(){const payload=clone(state);payload.exportedAt=new Date().t
 function importData(event){const file=event.target.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=async()=>{try{const imported=JSON.parse(reader.result);if(!confirm("匯入會覆蓋目前雲端資料，確定繼續？"))return;state=normalizeState(imported);state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};await saveAndRender();alert("匯入完成")}catch(error){alert("匯入失敗：JSON 格式不正確")}finally{event.target.value=""}};reader.readAsText(file)}
 function setupPWA(){if("serviceWorker" in navigator)navigator.serviceWorker.register("./service-worker.js").catch(console.warn);window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();deferredInstallPrompt=event;const btn=$("installBtn");if(btn)btn.classList.remove("hidden")});const installBtn=$("installBtn");if(installBtn)installBtn.onclick=async()=>{if(!deferredInstallPrompt)return;deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;installBtn.classList.add("hidden")}}
 function switchPage(page){document.querySelectorAll(".nav,.mobile-nav-item").forEach(x=>x.classList.toggle("active",x.dataset.page===page));document.querySelectorAll(".page").forEach(x=>x.classList.remove("active-page"));$(page).classList.add("active-page");$("pageTitle").textContent=pageTitles[page]||page;renderCharts();document.querySelector(".content")?.scrollTo?.({top:0,behavior:"smooth"});window.scrollTo({top:0,behavior:"smooth"})}
-function bind(){document.querySelectorAll(".nav,.mobile-nav-item").forEach(button=>{button.onclick=()=>switchPage(button.dataset.page)});$("lineLoginBtn").onclick=()=>signInWithPopup(auth,lineProvider);$("googleLoginBtn").onclick=()=>signInWithPopup(auth,provider);$("linkLineBtn").onclick=()=>linkProvider(lineProvider,"LINE");$("linkGoogleBtn").onclick=()=>linkProvider(provider,"Google");$("logoutBtn").onclick=()=>signOut(auth);if($("mobileLogoutBtn"))$("mobileLogoutBtn").onclick=()=>signOut(auth);$("saveBtn").onclick=async()=>{await saveData();alert("已同步到 Firestore")};$("addAssetBtn").onclick=()=>add("asset");$("addLiabilityBtn").onclick=()=>add("liability");$("addInvestmentBtn").onclick=()=>add("investment");$("addIncomeBtn").onclick=()=>add("income");$("addExpenseBtn").onclick=()=>add("expense");$("addJournalBtn").onclick=()=>add("journal");$("snapshotBtn").onclick=recordMonthlySnapshot;$("exportBtn").onclick=exportData;$("importBtn").onclick=()=>$("importFile").click();$("importFile").onchange=importData;$("editForm").onsubmit=submitEdit;$("deleteDialogBtn").onclick=deleteEditingItem;$("fireGoalInput").oninput=e=>{state.fire.goal=raw(e.target.value);e.target.value=nf(state.fire.goal);renderAll();saveData()};$("monthlyInvestInput").oninput=e=>{state.fire.monthlyInvestment=raw(e.target.value);e.target.value=nf(state.fire.monthlyInvestment);renderAll();saveData()};$("returnInput").oninput=e=>{state.fire.annualReturn=raw(e.target.value);renderAll();saveData()};$("displayNameInput").oninput=e=>{state.settings.displayName=e.target.value;renderUser();saveData()};$("emergencyMonthsInput").oninput=e=>{state.settings.emergencyMonths=raw(e.target.value);renderAI();saveData()};$("resetDemoBtn").onclick=async()=>{if(confirm("確定重置成示範資料？目前資料會被覆蓋。")){state=clone(defaultData);state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};await saveAndRender()}}}
+async function handleLogout(){
+  try { await signOut(auth); }
+  finally { window.location.reload(); }
+}
+
+function isLineInAppBrowser(){
+  return /\bLine\//i.test(navigator.userAgent) || /Line/i.test(navigator.userAgent);
+}
+
+function showLineBrowserNotice(){
+  const notice = $("lineBrowserNotice");
+  const loginCard = document.querySelector(".login-card");
+  if (notice) notice.classList.remove("hidden");
+  if (loginCard) loginCard.classList.add("line-browser-mode");
+  notice?.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function setupLineBrowserGuard(){
+  const copyBtn = $("copyAppUrlBtn");
+  const externalBtn = $("tryExternalBtn");
+  const appUrl = "https://andyhung6969.github.io/finance-dashboard/";
+  if (isLineInAppBrowser()) showLineBrowserNotice();
+  if (copyBtn) {
+    copyBtn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(appUrl);
+        alert("已複製網址。請用 Safari 或 Chrome 開啟。\n" + appUrl);
+      } catch (error) {
+        prompt("請複製這個網址，用 Safari 或 Chrome 開啟：", appUrl);
+      }
+    };
+  }
+  if (externalBtn) {
+    externalBtn.onclick = () => {
+      window.open(appUrl, "_blank", "noopener,noreferrer");
+      setTimeout(() => alert("如果還是在 LINE 裡，請點右下角 ⋯，選擇在 Safari / Chrome 開啟。"), 400);
+    };
+  }
+}
+
+function handleLineLogin(){
+  if (isLineInAppBrowser()) {
+    showLineBrowserNotice();
+    alert("目前在 LINE 內建瀏覽器，可能會出現 Firebase sessionStorage 錯誤。請改用 Safari 或 Chrome 開啟後再登入。");
+    return;
+  }
+  return signInWithPopup(auth,lineProvider);
+}
+
+function handleLineLink(){
+  if (isLineInAppBrowser()) {
+    showLineBrowserNotice();
+    alert("目前在 LINE 內建瀏覽器，無法穩定連結 LINE 帳號。請改用 Safari 或 Chrome 開啟後再連結。");
+    return;
+  }
+  return linkProvider(lineProvider,"LINE");
+}
+
+function bind(){document.querySelectorAll(".nav,.mobile-nav-item").forEach(button=>{button.onclick=()=>switchPage(button.dataset.page)});$("lineLoginBtn").onclick=handleLineLogin;$("googleLoginBtn").onclick=()=>signInWithPopup(auth,provider);$("linkLineBtn").onclick=handleLineLink;$("linkGoogleBtn").onclick=()=>linkProvider(provider,"Google");$("logoutBtn").onclick=handleLogout;if($("mobileLogoutBtn"))$("mobileLogoutBtn").onclick=handleLogout;$("saveBtn").onclick=async()=>{await saveData();alert("已同步到 Firestore")};$("addAssetBtn").onclick=()=>add("asset");$("addLiabilityBtn").onclick=()=>add("liability");$("addInvestmentBtn").onclick=()=>add("investment");$("addIncomeBtn").onclick=()=>add("income");$("addExpenseBtn").onclick=()=>add("expense");$("addJournalBtn").onclick=()=>add("journal");$("snapshotBtn").onclick=recordMonthlySnapshot;$("exportBtn").onclick=exportData;$("importBtn").onclick=()=>$("importFile").click();$("importFile").onchange=importData;$("editForm").onsubmit=submitEdit;$("deleteDialogBtn").onclick=deleteEditingItem;$("fireGoalInput").oninput=e=>{state.fire.goal=raw(e.target.value);e.target.value=nf(state.fire.goal);renderAll();saveData()};$("monthlyInvestInput").oninput=e=>{state.fire.monthlyInvestment=raw(e.target.value);e.target.value=nf(state.fire.monthlyInvestment);renderAll();saveData()};$("returnInput").oninput=e=>{state.fire.annualReturn=raw(e.target.value);renderAll();saveData()};$("displayNameInput").oninput=e=>{state.settings.displayName=e.target.value;renderUser();saveData()};$("emergencyMonthsInput").oninput=e=>{state.settings.emergencyMonths=raw(e.target.value);renderAI();saveData()};$("resetDemoBtn").onclick=async()=>{if(confirm("確定重置成示範資料？目前資料會被覆蓋。")){state=clone(defaultData);state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};await saveAndRender()}}}
 bind();setupPWA();
 onAuthStateChanged(auth,async currentUser=>{user=currentUser;if(currentUser){$("loginView").classList.add("hidden");$("appView").classList.remove("hidden");await loadData()}else{$("loginView").classList.remove("hidden");$("appView").classList.add("hidden")}});
