@@ -1,12 +1,10 @@
 {
-  "name": "FIRE OS 2.3",
+  "name": "FIRE OS 2.3.2",
   "short_name": "FIRE OS",
-  "description": "Personal Wealth OS with bilingual Traditional Chinese and English UI.",
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "./",
   "display": "standalone",
-  "background_color": "#0b1020",
-  "theme_color": "#22c55e",
+  "background_color": "#08110d",
+  "theme_color": "#13231a",
   "orientation": "portrait-primary",
   "icons": []
 }

@@ -1,21 +1,19 @@
-# FIRE OS 2.3
+# FIRE OS 2.3.2 – Assets Redesign
 
-Bilingual UI Edition.
+Assets-focused redesign with a mobile-first Net Worth app style.
 
-## New in 2.3
+## Highlights
 
-- English / Traditional Chinese language switch
-- Language preference synced to Firestore settings
-- Fixed mobile bottom navigation visibility bug
-- More reliable PWA safe-area spacing on mobile
-- Updated UI labels, dialog labels, AI Coach text, and alerts for bilingual use
+- Home dashboard redesign
+- Assets page redesign
+- Asset detail bottom sheet
+- Add asset bottom sheet
+- Portfolio donut / allocation UI
+- Debt overview
+- Bilingual Traditional Chinese / English
+- Firebase Google Login + Firestore sync
+- PWA files included
 
 ## Deploy
 
-Upload all files in this folder to the root of your GitHub Pages repository:
-
-- `index.html`
-- `manifest.json`
-- `service-worker.js`
-- `assets/`
-- `README.md`
+Upload all files in this folder to the root of your GitHub Pages repository.
