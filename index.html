@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FIRE OS 2.5.6</title>
+  <title>FIRE OS 2.5.1</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="assets/css/style.css?v=2.5.6" />
+  <link rel="stylesheet" href="assets/css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -14,25 +14,18 @@
   <section id="loginView" class="login-shell">
     <div class="login-card glass">
       <div class="logo-mark">🔥</div>
-      <h1>FIRE OS 2.5.6</h1>
-      <p>Mobile Avatar Edition</p>
+      <h1>FIRE OS 2.5.1</h1>
+      <p>Account Linking Edition</p>
       <button id="lineLoginBtn" class="line-btn">使用 LINE 登入</button>
       <div class="login-divider"><span></span><small>OR</small><span></span></div>
       <button id="googleLoginBtn" class="primary-btn secondary-login">使用 Google 登入</button>
-      <p class="tiny">LINE / Google 登入後會自動同步頭貼與 Profile 到 Firebase Firestore。</p>
-      <div id="lineBrowserNotice" class="line-browser-notice hidden">
-        <strong>LINE 登入需要外部瀏覽器</strong>
-        <p>如果畫面左上角看到「&lt; LINE」，代表你仍在 LINE App 內建瀏覽器，Firebase 會發生 sessionStorage 錯誤。請點右下角「⋯」→「在 Safari 開啟」。</p>
-        <button id="copyAppUrlBtn" class="ghost-btn full" type="button">複製網站網址</button>
-        <button id="tryExternalBtn" class="primary-btn full" type="button">嘗試用外部瀏覽器開啟</button>
-        <p class="tiny">iPhone：也可以點右下角「⋯」→ 選擇「在 Safari 開啟」。</p>
-      </div>
+      <p class="tiny">LINE Login + Google Login + Account Linking，登入後資料同步到 Firebase Firestore。</p>
     </div>
   </section>
 
   <main id="appView" class="app hidden">
     <aside class="sidebar glass desktop-only">
-      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.5.6</small></div>
+      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.5.1</small></div>
       <nav class="desktop-nav">
         <button class="nav active" data-page="dashboard">🏠 Dashboard</button>
         <button class="nav" data-page="assets">💰 Assets</button>
@@ -55,7 +48,7 @@
         <div><p id="greeting" class="eyebrow">Good Evening</p><h1 id="pageTitle">Dashboard</h1></div>
         <div class="top-actions">
           <button id="installBtn" class="ghost-btn small hidden">安裝 App</button>
-          <img id="mobileUserPhoto" class="mobile-user-photo mobile-only" alt="user" /><button id="mobileLogoutBtn" class="ghost-btn small mobile-only" type="button">登出</button>
+          <button id="mobileLogoutBtn" class="ghost-btn small mobile-only" type="button">登出</button>
           <button id="saveBtn" class="primary-btn small">同步</button>
         </div>
       </header>
@@ -158,6 +151,6 @@
     </form>
   </dialog>
 
-  <script type="module" src="assets/js/app.js?v=2.5.6"></script>
+  <script type="module" src="assets/js/app.js"></script>
 </body>
 </html>

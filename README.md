@@ -1,17 +1,13 @@
-# FIRE OS 2.5.6 - LINE Login Safety Edition
+# FIRE OS 2.5.1
 
-Hotfix：避免 LINE App / iPhone 內建瀏覽器觸發 Firebase OIDC missing initial state 錯誤。
+Mobile Logout Fix.
 
 ## Changed
-- LINE Login 在 iOS / LINE 內建瀏覽器上先阻擋，改顯示友善提示。
-- Google Login 維持可用。
-- Dashboard / Firestore / Profile Photo Sync 不變。
 
-## Note
-LINE App 內完整登入體驗之後應改走 LIFF。
+- 手機版右上角新增「登出」按鈕。
+- 桌機版 Sidebar 與其他功能完全不動。
+- 保留 LINE Login、Google Login、Account Linking、Firestore 同步。
 
+## Deploy
 
-## 2.5.6
-
-- Mobile header now shows the Google / LINE profile photo.
-- Desktop layout unchanged.
+解壓縮後，把所有檔案覆蓋到 GitHub repository 根目錄。
