@@ -26,17 +26,17 @@ const fieldConfigs = {
   journal:[["date","日期","date"],["title","標題","text"],["amount","金額","money"],["note","備註","textarea"]]
 };
 const defaultData = {
-  version:"2.5.4", settings:{displayName:"", emergencyMonths:6}, fire:{goal:30000000, monthlyInvestment:60000, annualReturn:8},
+  version:"2.5.5", settings:{displayName:"", emergencyMonths:6}, fire:{goal:30000000, monthlyInvestment:60000, annualReturn:8},
   assets:[{id:uid(),name:"現金 / 存款",type:"現金",amount:800000},{id:uid(),name:"房地產",type:"房產",amount:3000000},{id:uid(),name:"其他資產",type:"其他",amount:200000}],
   liabilities:[{id:uid(),name:"房貸",amount:2300000},{id:uid(),name:"信用卡",amount:0}],
   investments:[{id:uid(),symbol:"0050",name:"元大台灣50",cost:2300000,value:2850000,dividend:68000},{id:uid(),symbol:"VOO",name:"Vanguard S&P 500",cost:1200000,value:1560000,dividend:32000}],
   income:[{id:uid(),name:"薪水",amount:95000},{id:uid(),name:"租金",amount:18000},{id:uid(),name:"股息 / 利息",amount:12000}],
   expenses:[{id:uid(),name:"生活費",amount:30000},{id:uid(),name:"房貸",amount:25800},{id:uid(),name:"保險",amount:5000}],
-  journal:[{id:uid(),date:today(),title:"建立 FIRE OS 2.5.4",amount:0,note:"Responsive UI：桌機 Sidebar，手機下方漂浮浮標選單。"}],
+  journal:[{id:uid(),date:today(),title:"建立 FIRE OS 2.5.5",amount:0,note:"Responsive UI：桌機 Sidebar，手機下方漂浮浮標選單。"}],
   history:[{id:uid(),month:"2025-04",netWorth:5900000},{id:uid(),month:"2025-05",netWorth:6150000},{id:uid(),month:"2025-06",netWorth:6420000},{id:uid(),month:"2025-07",netWorth:6810000},{id:uid(),month:"2025-08",netWorth:7200000}]
 };
 function userRef(){return doc(db,"users",user.uid)}
-function normalizeState(data){const base=clone(defaultData);const merged={...base,...(data||{})};["assets","liabilities","investments","income","expenses","journal","history"].forEach(k=>{if(!Array.isArray(merged[k]))merged[k]=[];merged[k]=merged[k].map(item=>({id:item.id||uid(),...item}))});merged.settings={...base.settings,...(merged.settings||{})};merged.fire={...base.fire,...(merged.fire||{})};merged.version="2.5.4";return merged}
+function normalizeState(data){const base=clone(defaultData);const merged={...base,...(data||{})};["assets","liabilities","investments","income","expenses","journal","history"].forEach(k=>{if(!Array.isArray(merged[k]))merged[k]=[];merged[k]=merged[k].map(item=>({id:item.id||uid(),...item}))});merged.settings={...base.settings,...(merged.settings||{})};merged.fire={...base.fire,...(merged.fire||{})};merged.version="2.5.5";return merged}
 
 function providerSummary(){
   return (auth.currentUser?.providerData || []).map(p => ({
@@ -170,6 +170,20 @@ function isLineInAppBrowser(){
   return /\bLine\//i.test(navigator.userAgent) || /Line/i.test(navigator.userAgent);
 }
 
+function isIOSDevice(){
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+function isStandalonePWA(){
+  return window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone === true;
+}
+
+function shouldBlockMobileLineAuth(){
+  // Firebase OIDC returns through firebaseapp.com. On iOS opened from LINE, sessionStorage state is often lost.
+  // Until we implement LIFF, block LINE auth on iOS mobile surfaces and ask the user to use desktop or Google.
+  return isLineInAppBrowser() || (isIOSDevice() && !isStandalonePWA());
+}
+
 function showLineBrowserNotice(){
   const notice = $("lineBrowserNotice");
   const loginCard = document.querySelector(".login-card");
@@ -202,18 +216,18 @@ function setupLineBrowserGuard(){
 }
 
 function handleLineLogin(){
-  if (isLineInAppBrowser()) {
+  if (shouldBlockMobileLineAuth()) {
     showLineBrowserNotice();
-    alert("目前在 LINE 內建瀏覽器，可能會出現 Firebase sessionStorage 錯誤。請改用 Safari 或 Chrome 開啟後再登入。");
+    alert("為避免 LINE / iPhone 內建瀏覽器造成 Firebase sessionStorage 錯誤，請先用 Google 登入，或改用桌機瀏覽器進行 LINE 登入 / 連結。下一版我們會改走 LIFF 解決。 ");
     return;
   }
   return signInWithPopup(auth,lineProvider);
 }
 
 function handleLineLink(){
-  if (isLineInAppBrowser()) {
+  if (shouldBlockMobileLineAuth()) {
     showLineBrowserNotice();
-    alert("目前在 LINE 內建瀏覽器，無法穩定連結 LINE 帳號。請改用 Safari 或 Chrome 開啟後再連結。");
+    alert("為避免 LINE / iPhone 內建瀏覽器造成 Firebase sessionStorage 錯誤，LINE 連結請先在桌機瀏覽器操作。手機可先使用 Google 登入。 ");
     return;
   }
   return linkProvider(lineProvider,"LINE");

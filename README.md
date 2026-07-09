@@ -1,12 +1,11 @@
-# FIRE OS 2.5.4 — Profile Photo Sync
+# FIRE OS 2.5.5 - LINE Login Safety Edition
 
-小修版，只做 Profile 頭貼同步：
+Hotfix：避免 LINE App / iPhone 內建瀏覽器觸發 Firebase OIDC missing initial state 錯誤。
 
-- 登入後自動讀取 Firebase Auth `photoURL`
-- 支援 Google 頭貼
-- 支援 LINE OIDC 頭貼（若 LINE Provider 回傳 picture）
-- 將頭貼同步到 Firestore `profile.photoURL`
-- Sidebar 顯示同步後的頭貼
-- 無頭貼時顯示預設漸層 Avatar
+## Changed
+- LINE Login 在 iOS / LINE 內建瀏覽器上先阻擋，改顯示友善提示。
+- Google Login 維持可用。
+- Dashboard / Firestore / Profile Photo Sync 不變。
 
-不改 Dashboard / Assets / FIRE / Firestore 資料結構主體。
+## Note
+LINE App 內完整登入體驗之後應改走 LIFF。
