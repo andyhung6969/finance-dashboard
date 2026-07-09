@@ -1,11 +1,19 @@
-# FIRE OS 3.0 Alpha 1 Safe Build
+# FIRE OS 2.3.2 – Assets Redesign
 
-Goal: after Google Login, the app must always show usable UI.
+Assets-focused redesign with a mobile-first Net Worth app style.
 
-- Google Login
-- Firestore load/save
-- Demo Mode fallback
-- Home page
-- Assets CRUD
-- Settings
-- Mobile bottom nav
+## Highlights
+
+- Home dashboard redesign
+- Assets page redesign
+- Asset detail bottom sheet
+- Add asset bottom sheet
+- Portfolio donut / allocation UI
+- Debt overview
+- Bilingual Traditional Chinese / English
+- Firebase Google Login + Firestore sync
+- PWA files included
+
+## Deploy
+
+Upload all files in this folder to the root of your GitHub Pages repository.
