@@ -1,15 +1,11 @@
-# FIRE OS 3.0 Preview
+# FIRE OS 3.0 Alpha 1 Safe Build
 
-Full mobile-first redesign preview inspired by native Net Worth apps.
+Goal: after Google Login, the app must always show usable UI.
 
-## Includes
-- Home / Explore
-- Assets
-- Portfolio dashboard
-- Debt
+- Google Login
+- Firestore load/save
+- Demo Mode fallback
+- Home page
+- Assets CRUD
 - Settings
-- Floating Action Button
-- Bottom Sheet add flow
-- Firebase Google Login + Firestore sync
-
-Upload all files to GitHub repository root.
+- Mobile bottom nav

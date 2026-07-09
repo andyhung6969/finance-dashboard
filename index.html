@@ -3,104 +3,108 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>FIRE OS 3.0 Preview</title>
+  <title>FIRE OS 3.0 Alpha 1</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="assets/css/app.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <section id="login" class="login-screen">
-    <div class="login-card">
+  <section id="loginView" class="login-view">
+    <div class="login-card glass">
       <div class="app-icon">🔥</div>
-      <p class="kicker">FIRE OS 3.0 Preview</p>
+      <p class="overline">FIRE OS 3.0 ALPHA 1</p>
       <h1>Personal Wealth OS</h1>
-      <p class="muted">Apple Wallet inspired wealth dashboard. Google Login + Firestore sync.</p>
-      <button id="loginBtn" class="primary">使用 Google 登入</button>
+      <p class="login-copy">Safe Build：登入後一定進入 App。Firestore 失敗時會自動使用 Demo Mode。</p>
+      <button id="loginBtn" class="primary-btn">使用 Google 登入</button>
+      <button id="demoBtn" class="ghost-btn">先看 Demo UI</button>
     </div>
   </section>
 
-  <main id="app" class="app hidden">
-    <header class="statusbar"><span>9:41</span><span>▰▰▰ 79</span></header>
+  <main id="appView" class="app hidden">
+    <div id="toast" class="toast hidden">Cloud synced</div>
 
-    <section id="home" class="page active">
-      <div class="page-head">
-        <div><p class="overline">GOOD EVENING</p><h1>探索</h1></div>
-        <button class="round" data-page="settings">☰</button>
+    <header class="app-header">
+      <div>
+        <p id="greeting" class="overline">GOOD EVENING</p>
+        <h1 id="pageTitle">Home</h1>
       </div>
+      <div class="header-actions">
+        <button id="syncState" class="status-pill">Demo Mode</button>
+        <button id="logoutBtn" class="round-btn">⎋</button>
+      </div>
+    </header>
 
-      <article class="account-card card-glow">
-        <div class="account-top">
-          <div class="circle-icon blue">💼</div>
-          <div><h2>我的主帳戶 <span>PRO</span></h2><p>帳戶總覽・點擊切換帳戶</p></div>
-          <b>›</b>
+    <section id="homePage" class="page active">
+      <article class="hero-card glass">
+        <div>
+          <p class="metric-label">NET WORTH</p>
+          <h2 id="netWorthText">NT$0</h2>
+          <p id="netMeta" class="green">Cloud synced · Demo data ready</p>
         </div>
-        <div class="account-grid">
-          <div><small>淨值</small><strong id="homeNet">NT$0</strong></div>
-          <div><small>總資產</small><strong class="blue-text" id="homeAssets">NT$0</strong></div>
-          <div><small>槓桿</small><strong class="gold-text" id="homeLeverage">0.00x</strong></div>
-          <div><small>總負債</small><strong class="red-text" id="homeDebt">NT$0</strong></div>
-        </div>
+        <div class="fire-ring" id="fireRing" style="--p:0"><span id="firePct">0%</span></div>
       </article>
 
-      <article class="feature-card card-glow" data-page="cashflow">
-        <div class="circle-icon green">⇆</div>
-        <div><h2>金流管理 beta 版</h2><p>年度自由現金流 <span id="freeCash">NT$0</span></p></div><b>›</b>
-        <div class="mini-grid"><div><small>預估總收入</small><strong id="yearIncome">NT$0</strong></div><div><small>預估總支出</small><strong class="red-text" id="yearExpense">NT$0</strong></div><div><small>儲蓄率</small><strong class="blue-text" id="savingRate">0%</strong></div></div>
+      <section class="metric-grid">
+        <article class="metric-card glass"><span>Total Assets</span><strong id="assetsText">NT$0</strong></article>
+        <article class="metric-card glass"><span>Total Debt</span><strong id="debtText" class="red">NT$0</strong></article>
+        <article class="metric-card glass"><span>Cashflow</span><strong id="cashflowText" class="green">NT$0</strong></article>
+        <article class="metric-card glass"><span>FIRE Goal</span><strong id="goalText">NT$0</strong></article>
+      </section>
+
+      <article class="insight-card glass">
+        <h3>AI Insight</h3>
+        <div id="insights"></div>
       </article>
-
-      <article class="feature-card card-glow" data-page="assets"><div class="circle-icon orange">▣</div><div><h2>被動收入總覽</h2><p>點標的記錄股息、收租、利息</p></div><b>›</b></article>
-      <article class="feature-card card-glow" data-page="portfolio"><div class="circle-icon red">⌁</div><div><h2>CLEC 投資策略</h2><p>點擊開始設定</p></div><b>›</b></article>
-      <article class="feature-card card-glow" data-page="debt"><div class="circle-icon tan">🏦</div><div><h2>質押借款計算器</h2><p>尚無紀錄，點擊新增</p></div><b>›</b></article>
-      <article class="feature-card card-glow"><div class="circle-icon purple">✦</div><div><h2>鏡像時空 beta 測試版</h2><p>若每次資產變動都改買 0050，現在值多少？</p></div><b>›</b></article>
     </section>
 
-    <section id="assets" class="page">
-      <div class="page-head compact"><h1>我的資產</h1><div><button class="chip" id="refreshBtn">⟳ 更新</button><button class="round">ⓘ</button></div></div>
-      <article class="asset-hero card-glow">
-        <div class="hero-row"><div><small>總資產</small><h2 id="assetTotal">NT$0</h2></div><div><small>今日投資損益 (TWD)</small><strong class="red-text">▼ -$96,013</strong></div></div>
-        <div class="segmented"><button>近月</button><button class="active">今年</button><button>全部</button></div>
-        <div class="chart-box"><canvas id="assetTrend"></canvas></div>
-        <div class="allocation-bar" id="assetBar"></div>
-        <div class="legend" id="assetLegend"></div>
-        <div class="asset-summary"><div><b>💧 流動資產</b><strong id="liquidAssets">NT$0</strong></div><div><b>🏢 非流動資產</b><strong id="fixedAssets">NT$0</strong></div><div><b>🛡 保險</b><strong>—</strong></div></div>
+    <section id="assetsPage" class="page">
+      <article class="asset-summary glass">
+        <p class="metric-label">MY ASSETS</p>
+        <h2 id="assetHeroText">NT$0</h2>
+        <p class="green">Tap + to add your first real asset.</p>
       </article>
-      <div class="section-row"><span id="assetCount">0 筆資產</span><button class="chip">自訂顯示</button><button class="chip">排序</button></div>
-      <div id="assetList" class="native-list"></div>
+      <div id="assetList" class="asset-list"></div>
     </section>
 
-    <section id="portfolio" class="page">
-      <div class="page-head compact"><h1>儀表板</h1><div><button class="round">•••</button><button class="round">🌐</button><button class="round active">▥</button></div></div>
-      <article class="networth-card card-glow">
-        <small>淨資產 (NETWORTH)</small><h2 id="dashNet">NT$0</h2><div class="seg-row"><span>淨資產 (TWD)</span><div class="segmented"><button>近月</button><button class="active">今年</button><button>全部</button></div></div>
-        <div class="chart-box"><canvas id="netChart"></canvas></div>
-        <div class="metrics-row"><div><span>💼 總資產</span><strong id="dashAssets">NT$0</strong></div><div><span>🪙 投資槓桿</span><strong id="dashLev">0.00x</strong></div><div><span>💳 總負債</span><strong class="red-text" id="dashDebt">NT$0</strong></div></div>
+    <section id="settingsPage" class="page">
+      <article class="settings-card glass">
+        <h2>Settings</h2>
+        <label>FIRE Goal</label>
+        <input id="fireGoalInput" inputmode="numeric" />
+        <label>Monthly Cashflow</label>
+        <input id="cashflowInput" inputmode="numeric" />
+        <button id="saveSettingsBtn" class="primary-btn full">Save Settings</button>
+        <button id="resetDemoBtn" class="ghost-btn full">Reset Demo Data</button>
       </article>
-      <article class="portfolio-card card-glow"><div class="section-title"><h2>◔ 投資組合</h2><button class="chip">明細⌄</button></div><div class="portfolio-grid"><canvas id="portfolioChart"></canvas><div id="portfolioLegend" class="portfolio-legend"></div></div></article>
     </section>
 
-    <section id="debt" class="page">
-      <div class="page-head compact"><h1>我的負債</h1></div>
-      <article class="debt-hero card-glow"><small>總負債 (TWD)</small><h2 id="debtTotal">NT$0</h2><div class="debt-bar"></div><p id="debtDesc">房屋貸款</p></article>
-      <div id="debtList" class="native-list"></div>
-    </section>
+    <button id="fab" class="fab">＋</button>
 
-    <section id="settings" class="page">
-      <div class="page-head compact"><h1>設定</h1></div>
-      <article class="feature-card card-glow premium"><div class="circle-icon orange">✦</div><div><h2>FIRE OS 3.0 Preview</h2><p>Design System Preview</p></div><b>›</b></article>
-      <div class="settings-group card-glow"><button><span>主要顯示幣別</span><b>TWD⌄</b></button><button><span>外觀</span><b>Dark</b></button><button><span>安全性</span><b>›</b></button><button><span>每日記帳提醒</span><b class="switch on"></b></button><button id="logoutBtn"><span>登出</span><b>›</b></button></div>
-    </section>
-
-    <button id="fab" class="fab">+</button>
-    <nav class="tabbar">
-      <button class="active" data-page="home"><span>▦</span><small>探索</small></button>
-      <button data-page="assets"><span>💼</span><small>資產</small></button>
-      <button data-page="portfolio"><span>◔</span><small>儀表板</small></button>
-      <button data-page="debt"><span>▰</span><small>負債</small></button>
-      <button data-page="settings"><span>⚙</span><small>設定</small></button>
+    <nav class="bottom-nav glass">
+      <button data-page="home" class="active"><span>⌂</span><small>Home</small></button>
+      <button data-page="assets"><span>▣</span><small>Assets</small></button>
+      <button data-page="settings"><span>⚙</span><small>Settings</small></button>
     </nav>
   </main>
 
-  <dialog id="sheet" class="bottom-sheet"><form method="dialog"><h2>新增資產</h2><label>名稱</label><input id="newName" placeholder="例如：VOO、0050、現金" /><label>類型</label><select id="newType"><option>投資</option><option>現金</option><option>不動產</option><option>負債</option></select><label>金額</label><input id="newValue" inputmode="numeric" placeholder="100000" /><button id="saveItem" class="primary" value="default">儲存</button><button class="ghost" value="cancel">取消</button></form></dialog>
+  <dialog id="assetDialog" class="bottom-sheet glass">
+    <form method="dialog" id="assetForm">
+      <div class="sheet-handle"></div>
+      <h2 id="sheetTitle">Add Asset</h2>
+      <label>Name</label>
+      <input id="assetNameInput" placeholder="VOO, 0050, Cash..." />
+      <label>Type</label>
+      <select id="assetTypeInput">
+        <option>ETF</option><option>Stock</option><option>Cash</option><option>Real Estate</option><option>Other</option>
+      </select>
+      <label>Value</label>
+      <input id="assetValueInput" inputmode="numeric" placeholder="1,000,000" />
+      <div class="sheet-actions">
+        <button id="deleteAssetBtn" type="button" class="danger-btn hidden">Delete</button>
+        <button value="cancel" class="ghost-btn">Cancel</button>
+        <button id="saveAssetBtn" class="primary-btn">Save</button>
+      </div>
+    </form>
+  </dialog>
 
   <script type="module" src="assets/js/app.js"></script>
 </body>
