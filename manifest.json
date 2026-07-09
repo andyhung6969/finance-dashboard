@@ -1,10 +1,1 @@
-{
-  "name": "FIRE OS 2.3.2",
-  "short_name": "FIRE OS",
-  "start_url": "./",
-  "display": "standalone",
-  "background_color": "#08110d",
-  "theme_color": "#13231a",
-  "orientation": "portrait-primary",
-  "icons": []
-}
+{"name":"FIRE OS 3.0 Preview","short_name":"FIRE OS","start_url":"./","display":"standalone","background_color":"#0b1510","theme_color":"#0b1510","icons":[]}

@@ -1,19 +1,15 @@
-# FIRE OS 2.3.2 – Assets Redesign
+# FIRE OS 3.0 Preview
 
-Assets-focused redesign with a mobile-first Net Worth app style.
+Full mobile-first redesign preview inspired by native Net Worth apps.
 
-## Highlights
-
-- Home dashboard redesign
-- Assets page redesign
-- Asset detail bottom sheet
-- Add asset bottom sheet
-- Portfolio donut / allocation UI
-- Debt overview
-- Bilingual Traditional Chinese / English
+## Includes
+- Home / Explore
+- Assets
+- Portfolio dashboard
+- Debt
+- Settings
+- Floating Action Button
+- Bottom Sheet add flow
 - Firebase Google Login + Firestore sync
-- PWA files included
 
-## Deploy
-
-Upload all files in this folder to the root of your GitHub Pages repository.
+Upload all files to GitHub repository root.
