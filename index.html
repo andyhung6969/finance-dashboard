@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FIRE OS 2.4</title>
+  <title>FIRE OS 2.5</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="assets/css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,18 +14,18 @@
   <section id="loginView" class="login-shell">
     <div class="login-card glass">
       <div class="logo-mark">🔥</div>
-      <h1>FIRE OS 2.4</h1>
-      <p>LINE Login Edition</p>
+      <h1>FIRE OS 2.5</h1>
+      <p>Account Linking Edition</p>
       <button id="lineLoginBtn" class="line-btn">使用 LINE 登入</button>
       <div class="login-divider"><span></span><small>OR</small><span></span></div>
       <button id="googleLoginBtn" class="primary-btn secondary-login">使用 Google 登入</button>
-      <p class="tiny">LINE Login + Google Login，登入後資料同步到 Firebase Firestore。</p>
+      <p class="tiny">LINE Login + Google Login + Account Linking，登入後資料同步到 Firebase Firestore。</p>
     </div>
   </section>
 
   <main id="appView" class="app hidden">
     <aside class="sidebar glass desktop-only">
-      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.4</small></div>
+      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.5</small></div>
       <nav class="desktop-nav">
         <button class="nav active" data-page="dashboard">🏠 Dashboard</button>
         <button class="nav" data-page="assets">💰 Assets</button>
@@ -111,6 +111,17 @@
           <h2>設定</h2>
           <label>顯示名稱</label><input id="displayNameInput" />
           <label>預備金目標（月支出倍數）</label><input id="emergencyMonthsInput" type="number" />
+
+          <div class="account-link-box">
+            <h3>帳號連結</h3>
+            <p class="muted">把 Google 與 LINE 綁到同一個 Firebase 使用者，之後兩種登入方式都會看到同一份資料。</p>
+            <div id="providerStatus" class="provider-status"></div>
+            <div class="inline-actions">
+              <button id="linkLineBtn" class="line-mini-btn" type="button">連結 LINE</button>
+              <button id="linkGoogleBtn" class="ghost-btn" type="button">連結 Google</button>
+            </div>
+          </div>
+
           <button id="exportBtn" class="ghost-btn full">匯出 JSON 備份</button>
           <button id="importBtn" class="ghost-btn full">匯入 JSON 備份</button>
           <input id="importFile" type="file" accept="application/json" class="hidden" />

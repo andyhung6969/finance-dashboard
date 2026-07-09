@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, linkWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
 const firebaseConfig = { apiKey:"AIzaSyB5jUo6VmTNTRtCfwWhkwwXLYv1dcTSSi4", authDomain:"fire-dashboard-86bb9.firebaseapp.com", projectId:"fire-dashboard-86bb9", storageBucket:"fire-dashboard-86bb9.firebasestorage.app", messagingSenderId:"153073679515", appId:"1:153073679515:web:f49de492d1e79109fd1a3e", measurementId:"G-T34VDEFP7J" };
@@ -24,13 +24,13 @@ const fieldConfigs = {
   journal:[["date","日期","date"],["title","標題","text"],["amount","金額","money"],["note","備註","textarea"]]
 };
 const defaultData = {
-  version:"2.4", settings:{displayName:"", emergencyMonths:6}, fire:{goal:30000000, monthlyInvestment:60000, annualReturn:8},
+  version:"2.5", settings:{displayName:"", emergencyMonths:6}, fire:{goal:30000000, monthlyInvestment:60000, annualReturn:8},
   assets:[{id:uid(),name:"現金 / 存款",type:"現金",amount:800000},{id:uid(),name:"房地產",type:"房產",amount:3000000},{id:uid(),name:"其他資產",type:"其他",amount:200000}],
   liabilities:[{id:uid(),name:"房貸",amount:2300000},{id:uid(),name:"信用卡",amount:0}],
   investments:[{id:uid(),symbol:"0050",name:"元大台灣50",cost:2300000,value:2850000,dividend:68000},{id:uid(),symbol:"VOO",name:"Vanguard S&P 500",cost:1200000,value:1560000,dividend:32000}],
   income:[{id:uid(),name:"薪水",amount:95000},{id:uid(),name:"租金",amount:18000},{id:uid(),name:"股息 / 利息",amount:12000}],
   expenses:[{id:uid(),name:"生活費",amount:30000},{id:uid(),name:"房貸",amount:25800},{id:uid(),name:"保險",amount:5000}],
-  journal:[{id:uid(),date:today(),title:"建立 FIRE OS 2.3",amount:0,note:"Responsive UI：桌機 Sidebar，手機下方漂浮浮標選單。"}],
+  journal:[{id:uid(),date:today(),title:"建立 FIRE OS 2.5",amount:0,note:"Responsive UI：桌機 Sidebar，手機下方漂浮浮標選單。"}],
   history:[{id:uid(),month:"2025-04",netWorth:5900000},{id:uid(),month:"2025-05",netWorth:6150000},{id:uid(),month:"2025-06",netWorth:6420000},{id:uid(),month:"2025-07",netWorth:6810000},{id:uid(),month:"2025-08",netWorth:7200000}]
 };
 function userRef(){return doc(db,"users",user.uid)}
@@ -41,7 +41,67 @@ async function saveAndRender(){await saveData();renderAll()}
 function totals(){const directAssets=state.assets.reduce((s,x)=>s+raw(x.amount),0);const investmentValue=state.investments.reduce((s,x)=>s+raw(x.value),0);const investmentCost=state.investments.reduce((s,x)=>s+raw(x.cost),0);const debt=state.liabilities.reduce((s,x)=>s+raw(x.amount),0);const income=state.income.reduce((s,x)=>s+raw(x.amount),0);const expenses=state.expenses.reduce((s,x)=>s+raw(x.amount),0);const passive=state.income.filter(x=>/租|股息|利息|被動|dividend|interest|rent/i.test(x.name)).reduce((s,x)=>s+raw(x.amount),0);const assets=directAssets+investmentValue;return{directAssets,investmentValue,investmentCost,assets,debt,netWorth:assets-debt,income,expenses,cashflow:income-expenses,passive,savingRate:income?((income-expenses)/income)*100:0,debtRatio:assets?(debt/assets)*100:0}}
 function calcFire(){const t=totals();const goal=raw(state.fire.goal);const percent=goal?Math.min(Math.max((t.netWorth/goal)*100,0),100):0;let balance=t.netWorth, months=0;const monthlyRate=raw(state.fire.annualReturn)/100/12, monthlyInvestment=raw(state.fire.monthlyInvestment);if(balance>=goal)return{percent,months:0};if(monthlyInvestment<=0&&monthlyRate<=0)return{percent,months:null};while(balance<goal&&months<1200){balance=balance*(1+monthlyRate)+monthlyInvestment;months++}return{percent,months:months>=1200?null:months}}
 function renderAll(){if(!state)return;renderUser();renderDashboard();renderLists();renderFire();renderAI();renderCharts()}
-function renderUser(){$("userName").textContent=state.settings.displayName||user.displayName||"User";$("userEmail").textContent=user.email||"";$("userPhoto").src=user.photoURL||"";$("displayNameInput").value=state.settings.displayName||"";$("emergencyMonthsInput").value=state.settings.emergencyMonths||6}
+
+function getLinkedProviderIds(){
+  return (auth.currentUser?.providerData || []).map(p => p.providerId);
+}
+function hasGoogleLinked(){
+  return getLinkedProviderIds().includes("google.com");
+}
+function hasLineLinked(){
+  return getLinkedProviderIds().includes("oidc.oidc.line");
+}
+function renderAuthLinks(){
+  const box = $("providerStatus");
+  if (!box || !auth.currentUser) return;
+  const providers = getLinkedProviderIds();
+  const googleLinked = hasGoogleLinked();
+  const lineLinked = hasLineLinked();
+  box.innerHTML = `
+    <div class="provider-pill ${lineLinked ? "linked" : ""}">
+      <div><b>LINE</b><span>${lineLinked ? "已連結" : "尚未連結"}</span></div><strong>${lineLinked ? "✅" : "—"}</strong>
+    </div>
+    <div class="provider-pill ${googleLinked ? "linked" : ""}">
+      <div><b>Google</b><span>${googleLinked ? "已連結" : "尚未連結"}</span></div><strong>${googleLinked ? "✅" : "—"}</strong>
+    </div>
+    <div class="provider-pill"><div><b>目前 Provider</b><span>${providers.join(", ") || "未知"}</span></div></div>`;
+  const lineBtn = $("linkLineBtn");
+  const googleBtn = $("linkGoogleBtn");
+  if (lineBtn) lineBtn.disabled = lineLinked;
+  if (googleBtn) googleBtn.disabled = googleLinked;
+}
+async function linkProvider(provider, label){
+  if (!auth.currentUser) return alert("請先登入");
+  try {
+    await linkWithPopup(auth.currentUser, provider);
+    await auth.currentUser.reload();
+    user = auth.currentUser;
+    state.profile = {
+      ...(state.profile || {}),
+      uid: user.uid,
+      email: user.email || state.profile?.email || "",
+      name: user.displayName || state.profile?.name || "",
+      photo: user.photoURL || state.profile?.photo || "",
+      providers: getLinkedProviderIds()
+    };
+    await saveData();
+    renderAuthLinks();
+    alert(`${label} 連結成功！之後可以用 Google 或 LINE 登入同一份資料。`);
+  } catch (error) {
+    console.error(error);
+    if (error.code === "auth/provider-already-linked") {
+      alert(`${label} 已經連結過了。`);
+    } else if (error.code === "auth/credential-already-in-use" || error.code === "auth/email-already-in-use") {
+      alert(`${label} 已經被另一個 Firebase 帳號使用。\n\n請先登出，改用你想保留資料的主帳號登入，再按連結。若你已經分別建立兩份資料，下一步需要做資料合併。`);
+    } else if (error.code === "auth/popup-closed-by-user") {
+      alert("你關閉了登入視窗，尚未完成連結。");
+    } else {
+      alert(`連結失敗：${error.message}`);
+    }
+  }
+}
+
+function renderUser(){$("userName").textContent=state.settings.displayName||user.displayName||"User";$("userEmail").textContent=user.email||"";$("userPhoto").src=user.photoURL||"";$("displayNameInput").value=state.settings.displayName||"";$("emergencyMonthsInput").value=state.settings.emergencyMonths||6;renderAuthLinks()}
 function renderDashboard(){const t=totals(), f=calcFire();$("netWorthHero").textContent=fmt(t.netWorth);$("kpiAssets").textContent=fmt(t.assets);$("kpiDebt").textContent=fmt(t.debt);$("kpiCashflow").textContent=fmt(t.cashflow);$("kpiCashflow").className=t.cashflow>=0?"positive":"negative";$("kpiPassive").textContent=(t.expenses?Math.min((t.passive/t.expenses)*100,999):0).toFixed(1)+"%";$("fireRing").textContent=f.percent.toFixed(0)+"%";document.querySelector(".ring").style.setProperty("--p",f.percent+"%");$("heroDelta").textContent=`Cloud synced · 儲蓄率 ${t.savingRate.toFixed(1)}% · 負債比 ${t.debtRatio.toFixed(1)}%`}
 function simpleItemHTML(item,kind,options={}){const title=item.name||item.symbol||"未命名";const sub=options.sub||item.type||"";const amount=options.amount??raw(item.amount);return`<div class="item"><div><strong>${escapeHTML(title)}</strong><span>${escapeHTML(sub)}</span></div><div class="amount">${fmt(amount)}</div><button class="ghost-btn" data-edit="${kind}" data-id="${item.id}">編輯</button></div>`}
 function renderLists(){$("assetList").innerHTML=state.assets.map(x=>simpleItemHTML(x,"asset")).join("")||emptyText("尚無資產資料");$("liabilityList").innerHTML=state.liabilities.map(x=>simpleItemHTML(x,"liability",{sub:"負債"})).join("")||emptyText("尚無負債資料");$("investmentList").innerHTML=state.investments.map(x=>{const pnl=raw(x.value)-raw(x.cost), pct=raw(x.cost)?(pnl/raw(x.cost))*100:0;return`<div class="item"><div><strong>${escapeHTML(x.symbol||"投資")}</strong><span>${escapeHTML(x.name||"")} · 成本 ${fmt(x.cost)} · 股息 ${fmt(x.dividend)} · 報酬 ${pct.toFixed(1)}%</span></div><div class="amount ${pnl>=0?"positive":"negative"}">${fmt(x.value)}</div><button class="ghost-btn" data-edit="investment" data-id="${x.id}">編輯</button></div>`}).join("")||emptyText("尚無投資資料");$("incomeList").innerHTML=state.income.map(x=>simpleItemHTML(x,"income")).join("")||emptyText("尚無收入資料");$("expenseList").innerHTML=state.expenses.map(x=>simpleItemHTML(x,"expense")).join("")||emptyText("尚無支出資料");$("journalList").innerHTML=[...state.journal].sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(x=>`<div class="timeline-item"><strong>${escapeHTML(x.date||"未填日期")} · ${escapeHTML(x.title||"未命名")}</strong><p>${fmt(x.amount)}</p><span>${escapeHTML(x.note||"")}</span><button class="ghost-btn small" data-edit="journal" data-id="${x.id}">編輯</button></div>`).join("")||emptyText("尚無財務日誌");document.querySelectorAll("[data-edit]").forEach(button=>{button.onclick=()=>openEdit(button.dataset.edit,button.dataset.id)})}
@@ -62,6 +122,6 @@ function exportData(){const payload=clone(state);payload.exportedAt=new Date().t
 function importData(event){const file=event.target.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=async()=>{try{const imported=JSON.parse(reader.result);if(!confirm("匯入會覆蓋目前雲端資料，確定繼續？"))return;state=normalizeState(imported);state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};await saveAndRender();alert("匯入完成")}catch(error){alert("匯入失敗：JSON 格式不正確")}finally{event.target.value=""}};reader.readAsText(file)}
 function setupPWA(){if("serviceWorker" in navigator)navigator.serviceWorker.register("./service-worker.js").catch(console.warn);window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();deferredInstallPrompt=event;const btn=$("installBtn");if(btn)btn.classList.remove("hidden")});const installBtn=$("installBtn");if(installBtn)installBtn.onclick=async()=>{if(!deferredInstallPrompt)return;deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;installBtn.classList.add("hidden")}}
 function switchPage(page){document.querySelectorAll(".nav,.mobile-nav-item").forEach(x=>x.classList.toggle("active",x.dataset.page===page));document.querySelectorAll(".page").forEach(x=>x.classList.remove("active-page"));$(page).classList.add("active-page");$("pageTitle").textContent=pageTitles[page]||page;renderCharts();document.querySelector(".content")?.scrollTo?.({top:0,behavior:"smooth"});window.scrollTo({top:0,behavior:"smooth"})}
-function bind(){document.querySelectorAll(".nav,.mobile-nav-item").forEach(button=>{button.onclick=()=>switchPage(button.dataset.page)});$("lineLoginBtn").onclick=()=>signInWithPopup(auth,lineProvider);$("googleLoginBtn").onclick=()=>signInWithPopup(auth,provider);$("logoutBtn").onclick=()=>signOut(auth);$("saveBtn").onclick=async()=>{await saveData();alert("已同步到 Firestore")};$("addAssetBtn").onclick=()=>add("asset");$("addLiabilityBtn").onclick=()=>add("liability");$("addInvestmentBtn").onclick=()=>add("investment");$("addIncomeBtn").onclick=()=>add("income");$("addExpenseBtn").onclick=()=>add("expense");$("addJournalBtn").onclick=()=>add("journal");$("snapshotBtn").onclick=recordMonthlySnapshot;$("exportBtn").onclick=exportData;$("importBtn").onclick=()=>$("importFile").click();$("importFile").onchange=importData;$("editForm").onsubmit=submitEdit;$("deleteDialogBtn").onclick=deleteEditingItem;$("fireGoalInput").oninput=e=>{state.fire.goal=raw(e.target.value);e.target.value=nf(state.fire.goal);renderAll();saveData()};$("monthlyInvestInput").oninput=e=>{state.fire.monthlyInvestment=raw(e.target.value);e.target.value=nf(state.fire.monthlyInvestment);renderAll();saveData()};$("returnInput").oninput=e=>{state.fire.annualReturn=raw(e.target.value);renderAll();saveData()};$("displayNameInput").oninput=e=>{state.settings.displayName=e.target.value;renderUser();saveData()};$("emergencyMonthsInput").oninput=e=>{state.settings.emergencyMonths=raw(e.target.value);renderAI();saveData()};$("resetDemoBtn").onclick=async()=>{if(confirm("確定重置成示範資料？目前資料會被覆蓋。")){state=clone(defaultData);state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};await saveAndRender()}}}
+function bind(){document.querySelectorAll(".nav,.mobile-nav-item").forEach(button=>{button.onclick=()=>switchPage(button.dataset.page)});$("lineLoginBtn").onclick=()=>signInWithPopup(auth,lineProvider);$("googleLoginBtn").onclick=()=>signInWithPopup(auth,provider);$("linkLineBtn").onclick=()=>linkProvider(lineProvider,"LINE");$("linkGoogleBtn").onclick=()=>linkProvider(provider,"Google");$("logoutBtn").onclick=()=>signOut(auth);$("saveBtn").onclick=async()=>{await saveData();alert("已同步到 Firestore")};$("addAssetBtn").onclick=()=>add("asset");$("addLiabilityBtn").onclick=()=>add("liability");$("addInvestmentBtn").onclick=()=>add("investment");$("addIncomeBtn").onclick=()=>add("income");$("addExpenseBtn").onclick=()=>add("expense");$("addJournalBtn").onclick=()=>add("journal");$("snapshotBtn").onclick=recordMonthlySnapshot;$("exportBtn").onclick=exportData;$("importBtn").onclick=()=>$("importFile").click();$("importFile").onchange=importData;$("editForm").onsubmit=submitEdit;$("deleteDialogBtn").onclick=deleteEditingItem;$("fireGoalInput").oninput=e=>{state.fire.goal=raw(e.target.value);e.target.value=nf(state.fire.goal);renderAll();saveData()};$("monthlyInvestInput").oninput=e=>{state.fire.monthlyInvestment=raw(e.target.value);e.target.value=nf(state.fire.monthlyInvestment);renderAll();saveData()};$("returnInput").oninput=e=>{state.fire.annualReturn=raw(e.target.value);renderAll();saveData()};$("displayNameInput").oninput=e=>{state.settings.displayName=e.target.value;renderUser();saveData()};$("emergencyMonthsInput").oninput=e=>{state.settings.emergencyMonths=raw(e.target.value);renderAI();saveData()};$("resetDemoBtn").onclick=async()=>{if(confirm("確定重置成示範資料？目前資料會被覆蓋。")){state=clone(defaultData);state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};await saveAndRender()}}}
 bind();setupPWA();
 onAuthStateChanged(auth,async currentUser=>{user=currentUser;if(currentUser){$("loginView").classList.add("hidden");$("appView").classList.remove("hidden");await loadData()}else{$("loginView").classList.remove("hidden");$("appView").classList.add("hidden")}});

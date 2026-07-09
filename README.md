@@ -1,6 +1,6 @@
-# FIRE OS 2.4
+# FIRE OS 2.5
 
-LINE Login Edition.
+Account Linking Edition.
 
 ## New
 
@@ -24,3 +24,10 @@ Upload everything in this folder to the GitHub repository root:
 - Google provider enabled.
 - OIDC provider enabled with provider ID `oidc.oidc.line`.
 - LINE Developers Callback URL set to `https://fire-dashboard-86bb9.firebaseapp.com/__/auth/handler`.
+
+## New in 2.5
+
+- Settings page adds Account Linking.
+- Link LINE to a Google account, or link Google to a LINE account.
+- Uses Firebase `linkWithPopup()` with GoogleAuthProvider and OIDC LINE provider.
+- If Google and LINE were already used separately, Firebase may block linking because the credential is already in use; that requires data merge in a later version.

@@ -7,3 +7,5 @@
 .secondary-login{width:100%;background:rgba(255,255,255,.12)!important;color:var(--text)!important}
 .login-divider{display:flex;align-items:center;gap:12px;margin:15px 0;color:var(--muted)}
 .login-divider span{height:1px;background:var(--border);flex:1}.login-divider small{font-weight:800;letter-spacing:.12em}
+
+.account-link-box{margin:18px 0;padding:16px;border:1px solid var(--border);border-radius:20px;background:rgba(255,255,255,.06)}.account-link-box h3{margin:0 0 8px}.muted{color:var(--muted)}.provider-status{display:grid;gap:10px;margin:14px 0}.provider-pill{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border-radius:16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08)}.provider-pill b{font-size:15px}.provider-pill span{color:var(--muted);font-size:13px}.provider-pill.linked{border-color:rgba(39,229,143,.45);background:rgba(39,229,143,.1)}.line-mini-btn{border:0;border-radius:14px;padding:12px 16px;color:white;font-weight:900;cursor:pointer;background:linear-gradient(135deg,#06c755,#00b900)}
