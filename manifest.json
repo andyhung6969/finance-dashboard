@@ -1,7 +1,7 @@
 {
-  "name": "FIRE OS 2.3",
+  "name": "FIRE OS",
   "short_name": "FIRE OS",
-  "description": "Personal Wealth OS with bilingual Traditional Chinese and English UI.",
+  "description": "Personal Wealth Operating System",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
