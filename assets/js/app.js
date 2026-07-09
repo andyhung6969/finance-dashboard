@@ -4,6 +4,8 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
 
 const firebaseConfig = { apiKey:"AIzaSyB5jUo6VmTNTRtCfwWhkwwXLYv1dcTSSi4", authDomain:"fire-dashboard-86bb9.firebaseapp.com", projectId:"fire-dashboard-86bb9", storageBucket:"fire-dashboard-86bb9.firebasestorage.app", messagingSenderId:"153073679515", appId:"1:153073679515:web:f49de492d1e79109fd1a3e", measurementId:"G-T34VDEFP7J" };
 const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app); const provider = new GoogleAuthProvider(); const lineProvider = new OAuthProvider("oidc.oidc.line");
+lineProvider.addScope("profile");
+lineProvider.addScope("openid");
 let deferredInstallPrompt = null, user = null, state = null, charts = {}, editing = { kind:null, id:null };
 const $ = id => document.getElementById(id);
 const fmt = n => "NT$" + Math.round(Number(n)||0).toLocaleString("zh-TW");
@@ -24,18 +26,62 @@ const fieldConfigs = {
   journal:[["date","日期","date"],["title","標題","text"],["amount","金額","money"],["note","備註","textarea"]]
 };
 const defaultData = {
-  version:"2.5", settings:{displayName:"", emergencyMonths:6}, fire:{goal:30000000, monthlyInvestment:60000, annualReturn:8},
+  version:"2.5.4", settings:{displayName:"", emergencyMonths:6}, fire:{goal:30000000, monthlyInvestment:60000, annualReturn:8},
   assets:[{id:uid(),name:"現金 / 存款",type:"現金",amount:800000},{id:uid(),name:"房地產",type:"房產",amount:3000000},{id:uid(),name:"其他資產",type:"其他",amount:200000}],
   liabilities:[{id:uid(),name:"房貸",amount:2300000},{id:uid(),name:"信用卡",amount:0}],
   investments:[{id:uid(),symbol:"0050",name:"元大台灣50",cost:2300000,value:2850000,dividend:68000},{id:uid(),symbol:"VOO",name:"Vanguard S&P 500",cost:1200000,value:1560000,dividend:32000}],
   income:[{id:uid(),name:"薪水",amount:95000},{id:uid(),name:"租金",amount:18000},{id:uid(),name:"股息 / 利息",amount:12000}],
   expenses:[{id:uid(),name:"生活費",amount:30000},{id:uid(),name:"房貸",amount:25800},{id:uid(),name:"保險",amount:5000}],
-  journal:[{id:uid(),date:today(),title:"建立 FIRE OS 2.5",amount:0,note:"Responsive UI：桌機 Sidebar，手機下方漂浮浮標選單。"}],
+  journal:[{id:uid(),date:today(),title:"建立 FIRE OS 2.5.4",amount:0,note:"Responsive UI：桌機 Sidebar，手機下方漂浮浮標選單。"}],
   history:[{id:uid(),month:"2025-04",netWorth:5900000},{id:uid(),month:"2025-05",netWorth:6150000},{id:uid(),month:"2025-06",netWorth:6420000},{id:uid(),month:"2025-07",netWorth:6810000},{id:uid(),month:"2025-08",netWorth:7200000}]
 };
 function userRef(){return doc(db,"users",user.uid)}
-function normalizeState(data){const base=clone(defaultData);const merged={...base,...(data||{})};["assets","liabilities","investments","income","expenses","journal","history"].forEach(k=>{if(!Array.isArray(merged[k]))merged[k]=[];merged[k]=merged[k].map(item=>({id:item.id||uid(),...item}))});merged.settings={...base.settings,...(merged.settings||{})};merged.fire={...base.fire,...(merged.fire||{})};merged.version="2.3";return merged}
-async function loadData(){const snap=await getDoc(userRef());if(snap.exists())state=normalizeState(snap.data());else{state=clone(defaultData);state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};await saveData()}renderAll()}
+function normalizeState(data){const base=clone(defaultData);const merged={...base,...(data||{})};["assets","liabilities","investments","income","expenses","journal","history"].forEach(k=>{if(!Array.isArray(merged[k]))merged[k]=[];merged[k]=merged[k].map(item=>({id:item.id||uid(),...item}))});merged.settings={...base.settings,...(merged.settings||{})};merged.fire={...base.fire,...(merged.fire||{})};merged.version="2.5.4";return merged}
+
+function providerSummary(){
+  return (auth.currentUser?.providerData || []).map(p => ({
+    providerId: p.providerId,
+    uid: p.uid || "",
+    displayName: p.displayName || "",
+    email: p.email || "",
+    photoURL: p.photoURL || ""
+  }));
+}
+function bestAuthProfile(){
+  const current = auth.currentUser;
+  const providers = providerSummary();
+  const line = providers.find(p => p.providerId === "oidc.oidc.line" || /line/i.test(p.providerId));
+  const google = providers.find(p => p.providerId === "google.com");
+  const fallback = state?.profile || {};
+  const displayName = current?.displayName || line?.displayName || google?.displayName || fallback.name || fallback.displayName || "User";
+  const email = current?.email || google?.email || line?.email || fallback.email || "";
+  const photoURL = current?.photoURL || line?.photoURL || google?.photoURL || fallback.photoURL || fallback.photo || "";
+  return { displayName, email, photoURL, providers };
+}
+function defaultAvatarDataURL(name = "User"){
+  const initial = String(name || "U").trim().charAt(0).toUpperCase() || "U";
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#27e58f"/><stop offset="1" stop-color="#64d9ff"/></linearGradient></defs><rect width="128" height="128" rx="64" fill="url(#g)"/><text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" font-size="56" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-weight="800" fill="#06111f">${initial}</text></svg>`;
+  return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+}
+function syncProfileFromAuth(){
+  if (!state || !auth.currentUser) return false;
+  const profile = bestAuthProfile();
+  const before = JSON.stringify(state.profile || {});
+  state.profile = {
+    ...(state.profile || {}),
+    uid: auth.currentUser.uid,
+    email: profile.email,
+    name: profile.displayName,
+    displayName: profile.displayName,
+    photoURL: profile.photoURL,
+    photo: profile.photoURL,
+    providers: profile.providers.map(p => p.providerId),
+    providerDetails: profile.providers,
+    lastProfileSyncAt: new Date().toISOString()
+  };
+  return before !== JSON.stringify(state.profile || {});
+}
+async function loadData(){const snap=await getDoc(userRef());if(snap.exists())state=normalizeState(snap.data());else{state=clone(defaultData);state.profile={uid:user.uid,email:user.email,name:user.displayName,displayName:user.displayName,photoURL:user.photoURL,photo:user.photoURL,providers:getLinkedProviderIds(),providerDetails:providerSummary()};await saveData()}const changed=syncProfileFromAuth();if(changed)await saveData();renderAll()}
 async function saveData(){if(!user||!state)return;state.updatedAt=serverTimestamp();await setDoc(userRef(),state,{merge:true})}
 async function saveAndRender(){await saveData();renderAll()}
 function totals(){const directAssets=state.assets.reduce((s,x)=>s+raw(x.amount),0);const investmentValue=state.investments.reduce((s,x)=>s+raw(x.value),0);const investmentCost=state.investments.reduce((s,x)=>s+raw(x.cost),0);const debt=state.liabilities.reduce((s,x)=>s+raw(x.amount),0);const income=state.income.reduce((s,x)=>s+raw(x.amount),0);const expenses=state.expenses.reduce((s,x)=>s+raw(x.amount),0);const passive=state.income.filter(x=>/租|股息|利息|被動|dividend|interest|rent/i.test(x.name)).reduce((s,x)=>s+raw(x.amount),0);const assets=directAssets+investmentValue;return{directAssets,investmentValue,investmentCost,assets,debt,netWorth:assets-debt,income,expenses,cashflow:income-expenses,passive,savingRate:income?((income-expenses)/income)*100:0,debtRatio:assets?(debt/assets)*100:0}}
@@ -76,14 +122,7 @@ async function linkProvider(provider, label){
     await linkWithPopup(auth.currentUser, provider);
     await auth.currentUser.reload();
     user = auth.currentUser;
-    state.profile = {
-      ...(state.profile || {}),
-      uid: user.uid,
-      email: user.email || state.profile?.email || "",
-      name: user.displayName || state.profile?.name || "",
-      photo: user.photoURL || state.profile?.photo || "",
-      providers: getLinkedProviderIds()
-    };
+    syncProfileFromAuth();
     await saveData();
     renderAuthLinks();
     alert(`${label} 連結成功！之後可以用 Google 或 LINE 登入同一份資料。`);
@@ -101,7 +140,7 @@ async function linkProvider(provider, label){
   }
 }
 
-function renderUser(){$("userName").textContent=state.settings.displayName||user.displayName||"User";$("userEmail").textContent=user.email||"";$("userPhoto").src=user.photoURL||"";$("displayNameInput").value=state.settings.displayName||"";$("emergencyMonthsInput").value=state.settings.emergencyMonths||6;renderAuthLinks()}
+function renderUser(){const profile=bestAuthProfile();const name=state.settings.displayName||state.profile?.displayName||state.profile?.name||profile.displayName||"User";const email=state.profile?.email||profile.email||user.email||"";const photo=state.profile?.photoURL||state.profile?.photo||profile.photoURL||"";$("userName").textContent=name;$("userEmail").textContent=email;$("userPhoto").src=photo||defaultAvatarDataURL(name);$("userPhoto").alt=name;$("displayNameInput").value=state.settings.displayName||"";$("emergencyMonthsInput").value=state.settings.emergencyMonths||6;renderAuthLinks()}
 function renderDashboard(){const t=totals(), f=calcFire();$("netWorthHero").textContent=fmt(t.netWorth);$("kpiAssets").textContent=fmt(t.assets);$("kpiDebt").textContent=fmt(t.debt);$("kpiCashflow").textContent=fmt(t.cashflow);$("kpiCashflow").className=t.cashflow>=0?"positive":"negative";$("kpiPassive").textContent=(t.expenses?Math.min((t.passive/t.expenses)*100,999):0).toFixed(1)+"%";$("fireRing").textContent=f.percent.toFixed(0)+"%";document.querySelector(".ring").style.setProperty("--p",f.percent+"%");$("heroDelta").textContent=`Cloud synced · 儲蓄率 ${t.savingRate.toFixed(1)}% · 負債比 ${t.debtRatio.toFixed(1)}%`}
 function simpleItemHTML(item,kind,options={}){const title=item.name||item.symbol||"未命名";const sub=options.sub||item.type||"";const amount=options.amount??raw(item.amount);return`<div class="item"><div><strong>${escapeHTML(title)}</strong><span>${escapeHTML(sub)}</span></div><div class="amount">${fmt(amount)}</div><button class="ghost-btn" data-edit="${kind}" data-id="${item.id}">編輯</button></div>`}
 function renderLists(){$("assetList").innerHTML=state.assets.map(x=>simpleItemHTML(x,"asset")).join("")||emptyText("尚無資產資料");$("liabilityList").innerHTML=state.liabilities.map(x=>simpleItemHTML(x,"liability",{sub:"負債"})).join("")||emptyText("尚無負債資料");$("investmentList").innerHTML=state.investments.map(x=>{const pnl=raw(x.value)-raw(x.cost), pct=raw(x.cost)?(pnl/raw(x.cost))*100:0;return`<div class="item"><div><strong>${escapeHTML(x.symbol||"投資")}</strong><span>${escapeHTML(x.name||"")} · 成本 ${fmt(x.cost)} · 股息 ${fmt(x.dividend)} · 報酬 ${pct.toFixed(1)}%</span></div><div class="amount ${pnl>=0?"positive":"negative"}">${fmt(x.value)}</div><button class="ghost-btn" data-edit="investment" data-id="${x.id}">編輯</button></div>`}).join("")||emptyText("尚無投資資料");$("incomeList").innerHTML=state.income.map(x=>simpleItemHTML(x,"income")).join("")||emptyText("尚無收入資料");$("expenseList").innerHTML=state.expenses.map(x=>simpleItemHTML(x,"expense")).join("")||emptyText("尚無支出資料");$("journalList").innerHTML=[...state.journal].sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(x=>`<div class="timeline-item"><strong>${escapeHTML(x.date||"未填日期")} · ${escapeHTML(x.title||"未命名")}</strong><p>${fmt(x.amount)}</p><span>${escapeHTML(x.note||"")}</span><button class="ghost-btn small" data-edit="journal" data-id="${x.id}">編輯</button></div>`).join("")||emptyText("尚無財務日誌");document.querySelectorAll("[data-edit]").forEach(button=>{button.onclick=()=>openEdit(button.dataset.edit,button.dataset.id)})}
@@ -119,7 +158,7 @@ function labelOf(kind){return({asset:"資產",liability:"負債",investment:"投
 function escapeHTML(value){return String(value??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
 async function recordMonthlySnapshot(){const t=totals(), key=monthKey();const existing=state.history.find(x=>x.month===key);if(existing)existing.netWorth=t.netWorth;else state.history.push({id:uid(),month:key,netWorth:t.netWorth});state.journal.unshift({id:uid(),date:today(),title:"月度淨資產快照",amount:t.netWorth,note:`已記錄 ${key} 淨資產。`});await saveAndRender();alert("已建立本月快照")}
 function exportData(){const payload=clone(state);payload.exportedAt=new Date().toISOString();const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const link=document.createElement("a");link.href=URL.createObjectURL(blob);link.download=`fire-os-backup-${today()}.json`;link.click();URL.revokeObjectURL(link.href)}
-function importData(event){const file=event.target.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=async()=>{try{const imported=JSON.parse(reader.result);if(!confirm("匯入會覆蓋目前雲端資料，確定繼續？"))return;state=normalizeState(imported);state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};await saveAndRender();alert("匯入完成")}catch(error){alert("匯入失敗：JSON 格式不正確")}finally{event.target.value=""}};reader.readAsText(file)}
+function importData(event){const file=event.target.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=async()=>{try{const imported=JSON.parse(reader.result);if(!confirm("匯入會覆蓋目前雲端資料，確定繼續？"))return;state=normalizeState(imported);syncProfileFromAuth();await saveAndRender();alert("匯入完成")}catch(error){alert("匯入失敗：JSON 格式不正確")}finally{event.target.value=""}};reader.readAsText(file)}
 function setupPWA(){if("serviceWorker" in navigator)navigator.serviceWorker.register("./service-worker.js").catch(console.warn);window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();deferredInstallPrompt=event;const btn=$("installBtn");if(btn)btn.classList.remove("hidden")});const installBtn=$("installBtn");if(installBtn)installBtn.onclick=async()=>{if(!deferredInstallPrompt)return;deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;installBtn.classList.add("hidden")}}
 function switchPage(page){document.querySelectorAll(".nav,.mobile-nav-item").forEach(x=>x.classList.toggle("active",x.dataset.page===page));document.querySelectorAll(".page").forEach(x=>x.classList.remove("active-page"));$(page).classList.add("active-page");$("pageTitle").textContent=pageTitles[page]||page;renderCharts();document.querySelector(".content")?.scrollTo?.({top:0,behavior:"smooth"});window.scrollTo({top:0,behavior:"smooth"})}
 async function handleLogout(){
@@ -180,6 +219,6 @@ function handleLineLink(){
   return linkProvider(lineProvider,"LINE");
 }
 
-function bind(){document.querySelectorAll(".nav,.mobile-nav-item").forEach(button=>{button.onclick=()=>switchPage(button.dataset.page)});$("lineLoginBtn").onclick=handleLineLogin;$("googleLoginBtn").onclick=()=>signInWithPopup(auth,provider);$("linkLineBtn").onclick=handleLineLink;$("linkGoogleBtn").onclick=()=>linkProvider(provider,"Google");$("logoutBtn").onclick=handleLogout;if($("mobileLogoutBtn"))$("mobileLogoutBtn").onclick=handleLogout;$("saveBtn").onclick=async()=>{await saveData();alert("已同步到 Firestore")};$("addAssetBtn").onclick=()=>add("asset");$("addLiabilityBtn").onclick=()=>add("liability");$("addInvestmentBtn").onclick=()=>add("investment");$("addIncomeBtn").onclick=()=>add("income");$("addExpenseBtn").onclick=()=>add("expense");$("addJournalBtn").onclick=()=>add("journal");$("snapshotBtn").onclick=recordMonthlySnapshot;$("exportBtn").onclick=exportData;$("importBtn").onclick=()=>$("importFile").click();$("importFile").onchange=importData;$("editForm").onsubmit=submitEdit;$("deleteDialogBtn").onclick=deleteEditingItem;$("fireGoalInput").oninput=e=>{state.fire.goal=raw(e.target.value);e.target.value=nf(state.fire.goal);renderAll();saveData()};$("monthlyInvestInput").oninput=e=>{state.fire.monthlyInvestment=raw(e.target.value);e.target.value=nf(state.fire.monthlyInvestment);renderAll();saveData()};$("returnInput").oninput=e=>{state.fire.annualReturn=raw(e.target.value);renderAll();saveData()};$("displayNameInput").oninput=e=>{state.settings.displayName=e.target.value;renderUser();saveData()};$("emergencyMonthsInput").oninput=e=>{state.settings.emergencyMonths=raw(e.target.value);renderAI();saveData()};$("resetDemoBtn").onclick=async()=>{if(confirm("確定重置成示範資料？目前資料會被覆蓋。")){state=clone(defaultData);state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};await saveAndRender()}}}
+function bind(){document.querySelectorAll(".nav,.mobile-nav-item").forEach(button=>{button.onclick=()=>switchPage(button.dataset.page)});$("lineLoginBtn").onclick=handleLineLogin;$("googleLoginBtn").onclick=()=>signInWithPopup(auth,provider);$("linkLineBtn").onclick=handleLineLink;$("linkGoogleBtn").onclick=()=>linkProvider(provider,"Google");$("logoutBtn").onclick=handleLogout;if($("mobileLogoutBtn"))$("mobileLogoutBtn").onclick=handleLogout;$("saveBtn").onclick=async()=>{await saveData();alert("已同步到 Firestore")};$("addAssetBtn").onclick=()=>add("asset");$("addLiabilityBtn").onclick=()=>add("liability");$("addInvestmentBtn").onclick=()=>add("investment");$("addIncomeBtn").onclick=()=>add("income");$("addExpenseBtn").onclick=()=>add("expense");$("addJournalBtn").onclick=()=>add("journal");$("snapshotBtn").onclick=recordMonthlySnapshot;$("exportBtn").onclick=exportData;$("importBtn").onclick=()=>$("importFile").click();$("importFile").onchange=importData;$("editForm").onsubmit=submitEdit;$("deleteDialogBtn").onclick=deleteEditingItem;$("fireGoalInput").oninput=e=>{state.fire.goal=raw(e.target.value);e.target.value=nf(state.fire.goal);renderAll();saveData()};$("monthlyInvestInput").oninput=e=>{state.fire.monthlyInvestment=raw(e.target.value);e.target.value=nf(state.fire.monthlyInvestment);renderAll();saveData()};$("returnInput").oninput=e=>{state.fire.annualReturn=raw(e.target.value);renderAll();saveData()};$("displayNameInput").oninput=e=>{state.settings.displayName=e.target.value;renderUser();saveData()};$("emergencyMonthsInput").oninput=e=>{state.settings.emergencyMonths=raw(e.target.value);renderAI();saveData()};$("resetDemoBtn").onclick=async()=>{if(confirm("確定重置成示範資料？目前資料會被覆蓋。")){state=clone(defaultData);syncProfileFromAuth();await saveAndRender()}}}
 bind();setupPWA();
 onAuthStateChanged(auth,async currentUser=>{user=currentUser;if(currentUser){$("loginView").classList.add("hidden");$("appView").classList.remove("hidden");await loadData()}else{$("loginView").classList.remove("hidden");$("appView").classList.add("hidden")}});
