@@ -2,139 +2,125 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>FIRE OS 2.3.3 Demo Stable</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FIRE OS 2.3</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="assets/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <section id="loginView" class="login-view">
+  <div class="orb orb-a"></div><div class="orb orb-b"></div>
+
+  <section id="loginView" class="login-shell">
     <div class="login-card glass">
-      <div class="app-icon">🔥</div>
-      <p class="version">FIRE OS 2.3.3</p>
-      <h1>Personal Wealth OS</h1>
-      <p class="subtitle">Demo Stable Build · Google Login + Firestore Sync</p>
-      <button id="googleLoginBtn" class="primary-btn">使用 Google 登入</button>
-      <button id="demoBtn" class="ghost-btn">先看 Demo UI</button>
-      <p class="tiny">這版重點是：登入後一定看得到 UI；Firebase 失敗時會自動進入 Demo Mode。</p>
+      <div class="logo-mark">🔥</div>
+      <h1>FIRE OS 2.3</h1>
+      <p>Bilingual Mobile UI Edition</p>
+      <button id="googleLoginBtn" class="primary-btn" data-i18n="auth.google">使用 Google 登入</button>
+      <p class="tiny" data-i18n="auth.note">登入後資料會同步到 Firebase Firestore。</p>
     </div>
   </section>
 
   <main id="appView" class="app hidden">
-    <div class="safe-top">
-      <span>FIRE OS</span>
-      <span id="syncBadge">Demo Mode</span>
-    </div>
+    <aside class="sidebar glass">
+      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.3</small></div>
+      <nav>
+        <button class="nav active" data-page="dashboard"><span class="nav-ico">🏠</span><span class="nav-text" data-i18n="nav.dashboard">Dashboard</span></button>
+        <button class="nav" data-page="assets"><span class="nav-ico">💰</span><span class="nav-text" data-i18n="nav.assets">Assets</span></button>
+        <button class="nav" data-page="investments"><span class="nav-ico">📈</span><span class="nav-text" data-i18n="nav.investments">Investments</span></button>
+        <button class="nav" data-page="cashflow"><span class="nav-ico">💵</span><span class="nav-text" data-i18n="nav.cashflow">Cashflow</span></button>
+        <button class="nav" data-page="fire"><span class="nav-ico">🎯</span><span class="nav-text" data-i18n="nav.fire">FIRE</span></button>
+        <button class="nav" data-page="journal"><span class="nav-ico">📅</span><span class="nav-text" data-i18n="nav.journal">Journal</span></button>
+        <button class="nav" data-page="ai"><span class="nav-ico">🤖</span><span class="nav-text" data-i18n="nav.ai">AI Coach</span></button>
+        <button class="nav" data-page="settings"><span class="nav-ico">⚙️</span><span class="nav-text" data-i18n="nav.settings">Settings</span></button>
+      </nav>
+      <div class="profile-mini">
+        <img id="userPhoto" alt="user" />
+        <div><strong id="userName">User</strong><span id="userEmail"></span></div>
+      </div>
+      <button id="logoutBtn" class="ghost-btn" data-i18n="common.logout">登出</button>
+    </aside>
 
-    <section class="page active" id="homePage">
-      <header class="page-header">
-        <div>
-          <p class="eyebrow">GOOD EVENING</p>
-          <h1>探索</h1>
-        </div>
-        <div class="header-actions">
-          <button class="circle-btn" id="langBtn">中</button>
-          <button class="circle-btn" id="logoutBtn">↗</button>
-        </div>
+    <section class="content">
+      <header class="topbar">
+        <div><p id="greeting" class="eyebrow">Good Evening</p><h1 id="pageTitle">Dashboard</h1></div>
+        <div class="top-actions"><select id="languageSelectTop" class="language-select small"><option value="zh">中文</option><option value="en">English</option></select><button id="installBtn" class="ghost-btn small hidden" data-i18n="common.install">安裝 App</button><button id="saveBtn" class="primary-btn small" data-i18n="common.sync">同步資料</button></div>
       </header>
 
-      <article class="account-card glass">
-        <div class="account-top">
-          <div class="account-icon">💼</div>
-          <div>
-            <h2>我的主帳戶 <span>PRO</span></h2>
-            <p>帳戶總覽 · 點擊切換帳戶</p>
-          </div>
-          <strong>›</strong>
+      <section id="dashboard" class="page active-page">
+        <div class="hero glass">
+          <div><p class="eyebrow" data-i18n="dashboard.netWorth">Net Worth</p><h2 id="netWorthHero">NT$0</h2><p id="heroDelta" class="positive">Firestore synced</p></div>
+          <div class="ring"><span id="fireRing">0%</span></div>
         </div>
-        <div class="mini-stats">
-          <div><span>淨值</span><strong id="homeNetWorth">NT$0</strong></div>
-          <div><span>總資產</span><strong class="blue" id="homeAssets">NT$0</strong></div>
-          <div><span>槓桿</span><strong class="gold" id="homeLeverage">0.00x</strong></div>
-          <div><span>總負債</span><strong class="red" id="homeDebt">NT$0</strong></div>
+        <div class="kpi-grid">
+          <div class="card glass"><p data-i18n="dashboard.totalAssets">Total Assets</p><h3 id="kpiAssets">NT$0</h3></div>
+          <div class="card glass"><p data-i18n="dashboard.totalDebt">Total Debt</p><h3 id="kpiDebt">NT$0</h3></div>
+          <div class="card glass"><p data-i18n="dashboard.monthlyCashflow">Monthly Cashflow</p><h3 id="kpiCashflow">NT$0</h3></div>
+          <div class="card glass"><p data-i18n="dashboard.passiveCoverage">Passive Coverage</p><h3 id="kpiPassive">0%</h3></div>
         </div>
-      </article>
-
-      <article class="feature-card glass" data-go="cashflowPage">
-        <div class="feature-icon mint">↔</div>
-        <div>
-          <h2>金流管理 beta 版</h2>
-          <p id="cashflowSummary">年度自由現金流 NT$0</p>
+        <div class="two-col">
+          <div class="card glass"><h3 data-i18n="charts.assetAllocation">資產配置</h3><canvas id="assetChart"></canvas></div>
+          <div class="card glass"><h3 data-i18n="charts.netWorthTrend">淨資產趨勢</h3><canvas id="netWorthChart"></canvas></div>
         </div>
-        <strong>›</strong>
-        <div class="feature-stats">
-          <div><span>預估總收入</span><strong class="green" id="incomeText">NT$0</strong></div>
-          <div><span>預估總支出</span><strong class="red" id="expenseText">NT$0</strong></div>
-          <div><span>儲蓄率</span><strong class="blue" id="savingRateText">0%</strong></div>
+      </section>
+
+      <section id="assets" class="page">
+        <div class="section-head"><h2 data-i18n="assets.title">資產管理</h2><div class="inline-actions"><button class="primary-btn small" id="addAssetBtn" data-i18n="assets.addAsset">新增資產</button><button class="ghost-btn small" id="addLiabilityBtn" data-i18n="assets.addLiability">新增負債</button></div></div>
+        <div class="two-col no-top"><div class="card glass"><h3 data-i18n="assets.assets">資產</h3><div id="assetList" class="list"></div></div><div class="card glass"><h3 data-i18n="assets.liabilities">負債</h3><div id="liabilityList" class="list"></div></div></div>
+      </section>
+
+      <section id="investments" class="page">
+        <div class="section-head"><h2 data-i18n="investments.title">投資組合</h2><button class="primary-btn small" id="addInvestmentBtn" data-i18n="investments.add">新增投資</button></div>
+        <div id="investmentList" class="list"></div>
+      </section>
+
+      <section id="cashflow" class="page">
+        <div class="two-col">
+          <div class="card glass"><h3 data-i18n="cashflow.income">每月收入</h3><div id="incomeList"></div><button class="ghost-btn full" id="addIncomeBtn" data-i18n="cashflow.addIncome">新增收入</button></div>
+          <div class="card glass"><h3 data-i18n="cashflow.expenses">每月支出</h3><div id="expenseList"></div><button class="ghost-btn full" id="addExpenseBtn" data-i18n="cashflow.addExpense">新增支出</button></div>
         </div>
-      </article>
+      </section>
 
-      <article class="simple-row glass" data-go="portfolioPage"><span class="row-icon orange">▣</span><div><h2>被動收入總覽</h2><p>記錄股息、收租、利息</p></div><b>›</b></article>
-      <article class="simple-row glass" data-go="portfolioPage"><span class="row-icon red-bg">⌁</span><div><h2>投資策略</h2><p>ETF、股票與資產配置</p></div><b>›</b></article>
-      <article class="simple-row glass" data-go="debtPage"><span class="row-icon gold-bg">🏦</span><div><h2>質押借款計算器</h2><p>負債與槓桿追蹤</p></div><b>›</b></article>
-    </section>
-
-    <section class="page" id="assetsPage">
-      <header class="page-header">
-        <h1>我的資產</h1>
-        <div class="header-actions"><button class="pill-btn" id="refreshBtn">↻ 更新</button><button class="circle-btn">ⓘ</button></div>
-      </header>
-      <article class="asset-hero glass">
-        <div class="asset-hero-top">
-          <div><span>總資產</span><h2 id="assetHeroTotal">NT$0</h2></div>
-          <div><span>今日投資損益</span><strong class="red">▼ -NT$0</strong></div>
+      <section id="fire" class="page">
+        <div class="card glass fire-card">
+          <h2 data-i18n="fire.title">FIRE 模擬器</h2>
+          <label data-i18n="fire.goal">FIRE 目標金額</label><input id="fireGoalInput" class="money-input" />
+          <label data-i18n="fire.monthlyInvestment">每月投資金額</label><input id="monthlyInvestInput" class="money-input" />
+          <label data-i18n="fire.annualReturn">年化報酬率 (%)</label><input id="returnInput" type="number" />
+          <div class="summary-line"><span data-i18n="fire.eta">預估達成</span><strong id="fireEta">--</strong></div>
+          <div class="progress"><i id="fireProgress"></i></div>
         </div>
-        <div class="segmented"><button>近月</button><button class="active">今年</button><button>全部</button></div>
-        <div class="line-chart"><svg viewBox="0 0 360 180" preserveAspectRatio="none"><path d="M5,150 C45,130 60,136 76,126 C95,20 120,52 140,48 C190,67 210,58 235,48 C270,38 302,45 355,34"/><g><circle cx="5" cy="150"/><circle cx="76" cy="126"/><circle cx="140" cy="48"/><circle cx="235" cy="48"/><circle cx="355" cy="34"/></g></svg></div>
-        <div class="asset-split" id="assetSplit"></div>
-      </article>
-      <div class="section-tools"><span id="assetCount">0 筆資產</span><button class="pill-btn" id="addAssetBtn">＋ 新增資產</button></div>
-      <div class="asset-list" id="assetList"></div>
-    </section>
+      </section>
 
-    <section class="page" id="portfolioPage">
-      <header class="page-header"><h1>儀表板</h1><div class="header-actions"><button class="circle-btn">•••</button><button class="circle-btn active">▥</button></div></header>
-      <article class="dashboard-card glass">
-        <p>淨資產 (NETWORTH)</p>
-        <h2 id="dashNetWorth">NT$0</h2>
-        <div class="line-chart large"><svg viewBox="0 0 360 180" preserveAspectRatio="none"><path d="M5,150 C45,132 60,138 75,124 C95,28 122,53 142,50 C190,72 212,57 236,48 C270,36 304,43 355,35"/></svg></div>
-        <div class="dash-stats"><div><span>總資產</span><strong id="dashAssets">NT$0</strong></div><div><span>投資槓桿</span><strong class="gold" id="dashLev">0.00x</strong></div><div><span>總負債</span><strong class="red" id="dashDebt">NT$0</strong></div></div>
-      </article>
-      <article class="portfolio-card glass"><div class="section-title"><h2>投資組合</h2><button>明細⌄</button></div><div class="donut-row"><div class="donut" id="donut"></div><div id="portfolioLegend" class="legend"></div></div></article>
-    </section>
+      <section id="journal" class="page">
+        <div class="section-head"><h2 data-i18n="journal.title">財務日誌</h2><div class="inline-actions"><button class="ghost-btn small" id="snapshotBtn" data-i18n="journal.snapshot">記錄本月快照</button><button class="primary-btn small" id="addJournalBtn" data-i18n="journal.add">新增日誌</button></div></div>
+        <div id="journalList" class="timeline"></div>
+      </section>
 
-    <section class="page" id="debtPage">
-      <header class="page-header"><h1>我的負債</h1></header>
-      <article class="debt-total glass"><span>總負債 (TWD)</span><h2 id="debtHeroTotal">NT$0</h2><div class="debt-bar"></div><p id="debtDesc">尚無負債</p></article>
-      <div id="debtList" class="asset-list"></div>
-      <button class="primary-btn full" id="addDebtBtn">＋ 新增負債</button>
-    </section>
+      <section id="ai" class="page">
+        <div class="card glass"><h2 data-i18n="ai.title">AI Coach</h2><div id="aiInsights" class="insights"></div></div>
+      </section>
 
-    <section class="page" id="settingsPage">
-      <header class="page-header"><h1>設定</h1></header>
-      <article class="setting-card glass"><div><strong>語言</strong><span>中文 / English</span></div><select id="languageSelect"><option value="zh">中文</option><option value="en">English</option></select></article>
-      <article class="setting-card glass"><div><strong>主要顯示幣別</strong><span>TWD</span></div><strong>TWD⌄</strong></article>
-      <article class="setting-card glass"><div><strong>同步狀態</strong><span id="syncStatusText">Demo Mode</span></div><strong>☁</strong></article>
-      <button class="ghost-btn full" id="resetDemoBtn">重置 Demo 資料</button>
+      <section id="settings" class="page">
+        <div class="card glass settings-card">
+          <h2 data-i18n="settings.title">設定</h2>
+          <label data-i18n="settings.displayName">顯示名稱</label><input id="displayNameInput" />
+          <label data-i18n="settings.language">語言</label><select id="languageSelect"><option value="zh">中文</option><option value="en">English</option></select>
+          <label data-i18n="settings.emergencyMonths">預備金目標（月支出倍數）</label><input id="emergencyMonthsInput" type="number" />
+          <button id="exportBtn" class="ghost-btn full" data-i18n="settings.export">匯出 JSON 備份</button>
+          <button id="importBtn" class="ghost-btn full" data-i18n="settings.import">匯入 JSON 備份</button>
+          <input id="importFile" type="file" accept="application/json" class="hidden" />
+          <button id="resetDemoBtn" class="ghost-btn full danger" data-i18n="settings.reset">重置為示範資料</button>
+        </div>
+      </section>
     </section>
-
-    <button class="fab" id="fabBtn">＋</button>
-    <nav class="bottom-nav">
-      <button class="active" data-page="homePage"><span>▦</span><b>探索</b></button>
-      <button data-page="assetsPage"><span>💼</span><b>資產</b></button>
-      <button data-page="portfolioPage"><span>◔</span><b>儀表</b></button>
-      <button data-page="debtPage"><span>▰</span><b>負債</b></button>
-      <button data-page="settingsPage"><span>⚙</span><b>設定</b></button>
-    </nav>
   </main>
 
-  <dialog id="assetDialog" class="sheet">
-    <form method="dialog" id="assetForm">
-      <div class="sheet-head"><h2 id="sheetTitle">新增資產</h2><button value="cancel">×</button></div>
-      <label>名稱</label><input id="itemName" placeholder="例如：TWD、VOO、房地產" required />
-      <label>類型</label><select id="itemType"><option>現金</option><option>ETF</option><option>股票</option><option>不動產</option><option>負債</option><option>其他</option></select>
-      <label>金額</label><input id="itemValue" inputmode="numeric" placeholder="例如：23000000" required />
-      <menu><button value="cancel" class="ghost-btn">取消</button><button id="saveItemBtn" class="primary-btn" value="default">儲存</button></menu>
+  <dialog id="editDialog" class="glass dialog">
+    <form method="dialog" id="editForm">
+      <h3 id="dialogTitle">新增</h3>
+      <div id="dialogFields"></div>
+      <div class="dialog-actions"><button type="button" id="deleteDialogBtn" class="ghost-btn danger hidden" data-i18n="common.delete">刪除</button><span class="spacer"></span><button class="ghost-btn" value="cancel" data-i18n="common.cancel">取消</button><button id="dialogSave" class="primary-btn" value="default" data-i18n="common.save">儲存</button></div>
     </form>
   </dialog>
 

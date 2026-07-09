@@ -1,23 +1,21 @@
-# FIRE OS 2.3.3 Demo Stable
+# FIRE OS 2.3
 
-Internal demo stable build.
+Bilingual UI Edition.
 
-## Goals
+## New in 2.3
 
-- Keep HTML/CSS/JS + GitHub Pages + Firebase
-- Login should never block the demo UI
-- If Firestore fails, app falls back to Demo Mode
-- Home / Assets / Dashboard / Debt / Settings are visible after login
-- Assets and debts can be added or edited
+- English / Traditional Chinese language switch
+- Language preference synced to Firestore settings
+- Fixed mobile bottom navigation visibility bug
+- More reliable PWA safe-area spacing on mobile
+- Updated UI labels, dialog labels, AI Coach text, and alerts for bilingual use
 
 ## Deploy
 
-Upload all files to the GitHub repository root:
+Upload all files in this folder to the root of your GitHub Pages repository:
 
-- index.html
-- assets/
-- manifest.json
-- service-worker.js
-- README.md
-
-After deployment, open in an incognito/private window if the previous PWA cache is sticky.
+- `index.html`
+- `manifest.json`
+- `service-worker.js`
+- `assets/`
+- `README.md`
