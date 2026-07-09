@@ -1,179 +1,147 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FIRE OS 2.3.1</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>FIRE OS 2.3.2</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, addDoc, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB5jUo6VmTNTRtCfwWhkwwXLYv1dcTSSi4",
+      authDomain: "fire-dashboard-86bb9.firebaseapp.com",
+      projectId: "fire-dashboard-86bb9",
+      storageBucket: "fire-dashboard-86bb9.firebasestorage.app",
+      messagingSenderId: "153073679515",
+      appId: "1:153073679515:web:f49de492d1e79109fd1a3e",
+      measurementId: "G-T34VDEFP7J"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    const I18N = {
+      zh: { home:"首頁", assets:"資產", invest:"投資", debt:"負債", settings:"設定", goodEvening:"GOOD EVENING", welcome:"歡迎回來", myAssets:"我的資產", netWorth:"淨資產", totalAssets:"總資產", totalDebt:"總負債", cashflow:"月現金流", fire:"FIRE 進度", ai:"AI 今日洞察", allocation:"資產配置", list:"資產列表", language:"語言", logout:"登出", add:"新增資產", edit:"編輯資產", save:"儲存", cancel:"取消", del:"刪除", name:"名稱", type:"類型", amount:"金額", note:"備註", cloud:"Cloud synced", loginSub:"用 Google 登入，讓你的財富資料雲端同步。", login:"使用 Google 登入", empty:"還沒有資產，按 + 新增第一筆。", cash:"現金", stock:"股票", etf:"ETF", realEstate:"不動產", crypto:"加密貨幣", other:"其他" },
+      en: { home:"Home", assets:"Assets", invest:"Invest", debt:"Debt", settings:"Settings", goodEvening:"GOOD EVENING", welcome:"Welcome back", myAssets:"My Assets", netWorth:"Net Worth", totalAssets:"Total Assets", totalDebt:"Total Debt", cashflow:"Monthly Cashflow", fire:"FIRE Progress", ai:"AI Insight", allocation:"Asset Allocation", list:"Asset List", language:"Language", logout:"Logout", add:"Add Asset", edit:"Edit Asset", save:"Save", cancel:"Cancel", del:"Delete", name:"Name", type:"Type", amount:"Amount", note:"Note", cloud:"Cloud synced", loginSub:"Sign in with Google and sync your wealth data to the cloud.", login:"Continue with Google", empty:"No assets yet. Tap + to add your first one.", cash:"Cash", stock:"Stocks", etf:"ETF", realEstate:"Real Estate", crypto:"Crypto", other:"Other" }
+    };
+
+    const state = { user:null, lang:localStorage.getItem('fireos_lang') || 'zh', tab:'home', assets:[], debts:[], settings:{fireGoal:30000000}, cashflow:{income:150000, expense:90000}, charts:{}, unsub:[], editing:null };
+    const $ = id => document.getElementById(id);
+    const t = key => I18N[state.lang][key] || key;
+    const money = n => 'NT$' + Math.round(Number(n)||0).toLocaleString('zh-TW');
+    const parseMoney = v => Number(String(v||'').replace(/,/g,'').replace(/[^0-9.-]/g,'')) || 0;
+    const uidPath = (...p) => ['users', state.user.uid, ...p];
+    const userDoc = name => doc(db, ...uidPath(name));
+    const typeName = type => t(type) || type;
+    const icon = type => ({cash:'💵', stock:'📈', etf:'💎', realEstate:'🏠', crypto:'₿', other:'◼'}[type] || '◼');
+
+    async function seed(user){
+      const ref = userDoc('profile');
+      if((await getDoc(ref)).exists()) return;
+      await setDoc(ref,{name:user.displayName,email:user.email,photo:user.photoURL,createdAt:serverTimestamp()});
+      await setDoc(userDoc('settings'),{fireGoal:30000000,language:state.lang,currency:'TWD'});
+      await setDoc(userDoc('cashflow'),{income:150000,expense:90000});
+      const samples=[['VOO','etf',2300000,'Vanguard S&P 500 ETF'],['0050','etf',1500000,'元大台灣50'],['現金 / Cash','cash',320000,'Emergency fund'],['不動產 / Real Estate','realEstate',3000000,'Property'],['台股 / Taiwan Stocks','stock',2880000,'Local equities']];
+      for(const [name,type,amount,note] of samples) await addDoc(collection(db,...uidPath('assets')),{name,type,amount,note,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
+      await addDoc(collection(db,...uidPath('debts')),{name:'房貸 / Mortgage',amount:2300000,note:'Home loan',createdAt:serverTimestamp()});
+    }
+
+    function listen(){
+      state.unsub.forEach(f=>f()); state.unsub=[];
+      state.unsub.push(onSnapshot(collection(db,...uidPath('assets')), s=>{ state.assets=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.amount||0)-(a.amount||0)); render(); }));
+      state.unsub.push(onSnapshot(collection(db,...uidPath('debts')), s=>{ state.debts=s.docs.map(d=>({id:d.id,...d.data()})); render(); }));
+      state.unsub.push(onSnapshot(userDoc('settings'), s=>{ if(s.exists()){ state.settings={...state.settings,...s.data()}; if(state.settings.language && state.settings.language!==state.lang){ state.lang=state.settings.language; localStorage.setItem('fireos_lang',state.lang); }} render(); }));
+      state.unsub.push(onSnapshot(userDoc('cashflow'), s=>{ if(s.exists()) state.cashflow=s.data(); render(); }));
+    }
+
+    function totals(){ const assets=state.assets.reduce((s,a)=>s+(Number(a.amount)||0),0); const debt=state.debts.reduce((s,d)=>s+(Number(d.amount)||0),0); const net=assets-debt; const income=Number(state.cashflow.income)||0; const expense=Number(state.cashflow.expense)||0; const cashflow=income-expense; const goal=Number(state.settings.fireGoal)||30000000; return {assets,debt,net,income,expense,cashflow,goal,fire:Math.min(100,Math.max(0,net/goal*100)), debtRatio:assets?debt/assets*100:0, savings:income?cashflow/income*100:0}; }
+    function groups(){ const m={}; state.assets.forEach(a=>m[a.type]=(m[a.type]||0)+(Number(a.amount)||0)); return Object.entries(m).sort((a,b)=>b[1]-a[1]); }
+
+    function render(){ if(!state.user) return; translate(); const tt=totals(); const name=(state.user.displayName||'Andy').split(' ')[0];
+      $('welcomeName').textContent = `${t('welcome')}，${name} 👋`; $('avatar').src=state.user.photoURL||''; $('email').textContent=state.user.email||'';
+      $('netWorth').textContent=money(tt.net); $('homeAssets').textContent=money(tt.assets); $('homeDebt').textContent=money(tt.debt); $('homeCashflow').textContent=money(tt.cashflow); $('homeSub').textContent=`${t('cloud')} · 儲蓄率 ${tt.savings.toFixed(1)}% · 負債比 ${tt.debtRatio.toFixed(1)}%`;
+      $('fireRing').style.setProperty('--pct', (tt.fire*3.6)+'deg'); $('firePct').textContent=tt.fire.toFixed(0)+'%'; $('fireSmall').textContent=tt.fire.toFixed(0)+'%';
+      $('assetHeroAmount').textContent=money(tt.assets); $('assetHeroChange').textContent='▲ Today +' + money(Math.round(tt.assets*.0018)) + ' (+0.18%)'; $('debtHeroAmount').textContent=money(tt.debt);
+      const top=groups()[0]||['other',0]; const pct=tt.assets?(top[1]/tt.assets*100).toFixed(1):'0.0';
+      $('aiList').innerHTML=[`目前資產配置以 ${typeName(top[0])} 為主，占比約 ${pct}%。`,`你的淨資產為 ${money(tt.net)}，距離 FIRE 目標還差 ${money(Math.max(0,tt.goal-tt.net))}。`,`若每月多投入 NT$10,000，預估可提早約 10 個月達成 FIRE。`].map(x=>`<div class="insight">${x}</div>`).join('');
+      $('assetList').innerHTML = state.assets.length ? state.assets.map(a=>`<button class="wealth-row" onclick="window.detail('${a.id}')"><div class="asset-icon ${a.type}">${icon(a.type)}</div><div class="row-main"><strong>${esc(a.name)}</strong><span>${typeName(a.type)} · ${esc(a.note||'')}</span></div><div class="row-right"><b>${money(a.amount)}</b><span>▲ ${tt.assets?(a.amount/tt.assets*100).toFixed(0):0}%</span></div></button>`).join('') : `<div class="empty">${t('empty')}</div>`;
+      $('debtList').innerHTML = state.debts.map(d=>`<div class="debt-card"><div><h3>${esc(d.name)}</h3><p>${esc(d.note||'')}</p></div><strong>-${money(d.amount)}</strong></div>`).join('');
+      $('allocationBars').innerHTML = groups().map(([type,amount])=>{ const p=tt.assets?amount/tt.assets*100:0; return `<div class="alloc"><span>${typeName(type)}</span><b>${p.toFixed(1)}%</b><div><i style="width:${p}%"></i></div></div>`; }).join('');
+      charts(tt);
+    }
+
+    function translate(){ document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n)); $('langBtn').textContent=state.lang==='zh'?'中 / EN':'EN / 中'; }
+    function esc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function chartOpts(){ return {responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'rgba(255,255,255,.55)'}},y:{grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'rgba(255,255,255,.55)',callback:v=>Math.round(v/1000000)+'M'}}}}; }
+    function charts(tt){
+      if(state.charts.line) state.charts.line.destroy(); if(state.charts.donut) state.charts.donut.destroy();
+      state.charts.line = new Chart($('trendChart'),{type:'line',data:{labels:['6/8','6/15','6/22','6/29','7/6'],datasets:[{data:[tt.assets*.86,tt.assets*.9,tt.assets*.94,tt.assets*.98,tt.assets],borderColor:'#64F1A6',backgroundColor:'rgba(100,241,166,.12)',fill:true,tension:.38,pointRadius:2}]},options:chartOpts()});
+      const g=groups(); state.charts.donut = new Chart($('donutChart'),{type:'doughnut',data:{labels:g.map(x=>typeName(x[0])),datasets:[{data:g.map(x=>x[1]),backgroundColor:['#64F1A6','#6DA8FF','#FFBE4D','#F17C82','#A886FF','#AAB3BD'],borderWidth:0}]},options:{responsive:true,cutout:'68%',plugins:{legend:{display:false}}}});
+    }
+    function tab(name){ state.tab=name; document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); $('page-'+name).classList.add('active'); $('nav-'+name).classList.add('active'); render(); }
+    async function switchLang(){ state.lang=state.lang==='zh'?'en':'zh'; localStorage.setItem('fireos_lang',state.lang); if(state.user) await setDoc(userDoc('settings'),{language:state.lang},{merge:true}); render(); }
+    function openSheet(asset=null){ state.editing=asset?.id||null; $('sheetTitle').textContent=asset?t('edit'):t('add'); $('assetName').value=asset?.name||''; $('assetType').value=asset?.type||'etf'; $('assetAmount').value=asset?.amount?Number(asset.amount).toLocaleString('zh-TW'):''; $('assetNote').value=asset?.note||''; $('deleteAsset').style.display=asset?'block':'none'; $('sheet').classList.add('show'); }
+    function closeSheet(){ $('sheet').classList.remove('show'); state.editing=null; }
+    async function saveAsset(){ const data={name:$('assetName').value.trim()||'Untitled',type:$('assetType').value,amount:parseMoney($('assetAmount').value),note:$('assetNote').value.trim(),updatedAt:serverTimestamp()}; if(state.editing) await updateDoc(doc(db,...uidPath('assets',state.editing)),data); else await addDoc(collection(db,...uidPath('assets')),{...data,createdAt:serverTimestamp()}); closeSheet(); }
+    async function removeAsset(){ if(!state.editing||!confirm(t('del')+'?')) return; await deleteDoc(doc(db,...uidPath('assets',state.editing))); closeSheet(); }
+    window.detail = id => { const a=state.assets.find(x=>x.id===id); if(a) openSheet(a); };
+
+    window.addEventListener('DOMContentLoaded',()=>{ $('loginBtn').onclick=()=>signInWithPopup(auth,provider).catch(e=>alert(e.message)); $('logout').onclick=()=>signOut(auth); $('langBtn').onclick=switchLang; document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.tab)); $('fab').onclick=()=>openSheet(); $('sheetClose').onclick=closeSheet; $('cancelAsset').onclick=closeSheet; $('saveAsset').onclick=saveAsset; $('deleteAsset').onclick=removeAsset; $('assetAmount').oninput=e=>{ const raw=e.target.value.replace(/,/g,'').replace(/[^0-9]/g,''); e.target.value=raw?Number(raw).toLocaleString('zh-TW'):''; }; translate(); });
+    onAuthStateChanged(auth,async user=>{ state.user=user; if(!user){ $('login').style.display='flex'; $('app').style.display='none'; state.unsub.forEach(f=>f()); return; } $('login').style.display='none'; $('app').style.display='block'; await seed(user); listen(); });
+  </script>
+  <style>
+    :root{--bg:#07110d;--card:#21382b;--stroke:rgba(255,255,255,.14);--text:#f4f8f4;--muted:rgba(244,248,244,.62);--mint:#64F1A6;--red:#F17C82;--blue:#6DA8FF;--gold:#F8CE66;--radius:30px;--shadow:0 20px 60px rgba(0,0,0,.38);--safe:env(safe-area-inset-bottom,0px)}*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Noto Sans TC","Segoe UI",sans-serif}body:before{content:"";position:fixed;inset:0;background:radial-gradient(circle at 30% -10%,rgba(78,210,140,.18),transparent 34%),linear-gradient(180deg,#07110d,#0b1510 48%,#07110d);pointer-events:none;z-index:-1}button,input,select,textarea{font:inherit}button{border:0;cursor:pointer;color:inherit}.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}.login-card{width:min(430px,100%);padding:34px;border:1px solid var(--stroke);border-radius:34px;background:linear-gradient(155deg,rgba(36,58,45,.9),rgba(13,29,22,.92));box-shadow:var(--shadow);text-align:center}.logo{font-size:54px}.login h1{font-size:48px;margin:12px 0 8px}.login p{color:var(--muted);font-size:18px;line-height:1.5}.primary{width:100%;padding:16px 20px;border-radius:18px;background:linear-gradient(135deg,#22C55E,#22d3aa);font-weight:800;margin-top:22px}.app{display:none;max-width:520px;margin:0 auto;min-height:100vh;padding:22px 16px calc(110px + var(--safe));position:relative}.top-actions{display:flex;justify-content:flex-end;gap:12px;margin:18px 0 8px}.circle-btn{width:48px;height:48px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--stroke);backdrop-filter:blur(18px);display:grid;place-items:center;font-size:18px}.kicker{letter-spacing:.3em;color:var(--muted);font-size:13px;font-weight:800;margin-top:8px}.page-title{font-size:54px;line-height:.95;margin:8px 0 26px;letter-spacing:-.055em}.page{display:none}.page.active{display:block;animation:fadeUp .25s ease both}@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}.glass{border:1px solid var(--stroke);border-radius:var(--radius);background:linear-gradient(160deg,rgba(43,72,54,.88),rgba(24,43,33,.88));box-shadow:var(--shadow);backdrop-filter:blur(22px)}.hero{padding:28px;margin-bottom:18px}.label{color:var(--muted);letter-spacing:.16em;font-weight:850;font-size:15px;text-transform:uppercase}.amount{font-size:48px;font-weight:900;letter-spacing:-.06em;margin:12px 0}.subline{font-size:18px;color:var(--mint);line-height:1.4}.hero-grid{display:grid;grid-template-columns:1fr 120px;gap:14px;align-items:end}.ring{width:116px;height:116px;border-radius:50%;background:conic-gradient(var(--mint) var(--pct), rgba(255,255,255,.14) 0);display:grid;place-items:center;position:relative}.ring:after{content:"";position:absolute;inset:18px;border-radius:50%;background:#0c1712}.ring b{position:relative;z-index:1;font-size:30px}.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}.metric{padding:18px;border-radius:22px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08)}.metric span{color:var(--muted);font-weight:800}.metric b{display:block;font-size:22px;margin-top:8px}.red{color:var(--red)!important}.mint{color:var(--mint)!important}.gold{color:var(--gold)!important}.section{margin:24px 0 12px;display:flex;justify-content:space-between;align-items:center}.section h2{font-size:24px;margin:0}.insight{padding:16px 18px;border-radius:18px;background:rgba(255,255,255,.07);margin:10px 0;color:rgba(255,255,255,.86);line-height:1.55;font-weight:650}.chart-card{padding:22px;margin-bottom:18px}canvas{max-height:260px}.seg{display:flex;background:rgba(255,255,255,.08);padding:4px;border-radius:18px;gap:3px}.seg button{background:transparent;padding:8px 14px;border-radius:15px;color:var(--muted);font-weight:800}.seg button.active{background:rgba(255,255,255,.18);color:var(--text)}.wealth-row{width:100%;display:flex;align-items:center;gap:14px;text-align:left;padding:14px 0;background:transparent;border-bottom:1px solid rgba(255,255,255,.08)}.wealth-row:last-child{border-bottom:0}.asset-icon{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:rgba(100,241,166,.14)}.row-main{flex:1;min-width:0}.row-main strong{display:block;font-size:17px}.row-main span,.row-right span{display:block;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.row-right{text-align:right}.row-right b{display:block;font-size:16px}.empty{color:var(--muted);padding:18px;text-align:center}.alloc{display:grid;grid-template-columns:1fr auto;gap:8px;margin:14px 0;color:var(--muted)}.alloc div{grid-column:1/3;height:8px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}.alloc i{display:block;height:100%;background:linear-gradient(90deg,var(--mint),#6DA8FF);border-radius:999px}.debt-card{display:flex;justify-content:space-between;gap:16px;padding:22px;margin-bottom:14px;border:1px solid var(--stroke);border-radius:var(--radius);background:rgba(43,72,54,.74)}.debt-card h3{font-size:24px;margin:0 0 8px}.debt-card p{color:var(--muted);margin:0}.debt-card strong{font-size:22px;color:var(--red);align-self:center;white-space:nowrap}.profile{display:flex;align-items:center;gap:12px}.profile img{width:48px;height:48px;border-radius:50%}.profile strong{display:block}.profile span{color:var(--muted);font-size:13px}.logout{padding:11px 16px;border-radius:16px;background:rgba(255,255,255,.11);margin-top:18px}.bottom-nav{position:fixed;left:50%;bottom:calc(14px + var(--safe));transform:translateX(-50%);width:min(470px,calc(100vw - 28px));height:78px;border-radius:999px;background:rgba(16,35,26,.74);border:1px solid rgba(255,255,255,.16);box-shadow:0 14px 50px rgba(0,0,0,.45);backdrop-filter:blur(26px);display:grid;grid-template-columns:repeat(5,1fr);padding:7px;z-index:50}.nav-btn{border-radius:999px;background:transparent;color:rgba(255,255,255,.86);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;font-weight:750}.nav-btn i{font-style:normal;font-size:24px}.nav-btn.active{background:rgba(255,255,255,.14);color:var(--mint)}.fab{position:fixed;right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(104px + var(--safe));width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#8AB6FF,#60A5FA);box-shadow:0 18px 40px rgba(96,165,250,.34);font-size:46px;font-weight:300;z-index:55}.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:80;display:none;align-items:flex-end}.backdrop.show{display:flex}.sheet{width:100%;max-width:520px;margin:0 auto;background:#102019;border:1px solid var(--stroke);border-radius:34px 34px 0 0;padding:22px 18px calc(22px + var(--safe));box-shadow:0 -20px 60px rgba(0,0,0,.5);animation:sheet .22s ease both}@keyframes sheet{from{transform:translateY(100%)}to{transform:none}}.sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.sheet-head h2{margin:0}.x{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.1)}.field{margin:14px 0}.field label{display:block;color:var(--muted);font-weight:800;margin-bottom:8px}.field input,.field select,.field textarea{width:100%;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.14);color:var(--text);border-radius:16px;padding:14px 15px;outline:0}.field textarea{min-height:82px;resize:vertical}.sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}.secondary{padding:15px;border-radius:17px;background:rgba(255,255,255,.09);font-weight:850}.danger{padding:15px;border-radius:17px;background:rgba(241,124,130,.85);font-weight:850}
+    @media(min-width:760px){.app{max-width:1180px;padding-left:320px}.bottom-nav{left:24px;top:24px;bottom:auto;transform:none;width:260px;height:auto;border-radius:28px;grid-template-columns:1fr;padding:14px;gap:8px}.nav-btn{height:58px;flex-direction:row;justify-content:flex-start;padding-left:20px;font-size:15px}.fab{right:42px}.page-title{font-size:64px}.home-layout{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}.hero{margin-bottom:0}.metric-grid{grid-template-columns:repeat(4,1fr)}.asset-layout{display:grid;grid-template-columns:1.05fr .95fr;gap:18px}}
+
+    /* Layout hotfix 2.3.2a: keep cards, charts and large numbers inside their containers on wide and narrow screens. */
+    html,body{overflow-x:hidden}
+    .app{width:100%}
+    .glass{overflow:hidden}
+    .hero-grid{grid-template-columns:minmax(0,1fr) auto;align-items:center}
+    .amount{font-size:clamp(38px,8vw,82px);line-height:.95;max-width:100%;overflow-wrap:anywhere}
+    .subline{max-width:100%;overflow-wrap:anywhere}
+    .chart-card{position:relative;min-width:0}
+    .chart-card canvas{display:block;width:100%!important;max-width:100%;height:260px!important;margin:0 auto}
+    #donutChart{height:230px!important;max-height:230px!important}
+    #trendChart{height:260px!important;max-height:260px!important}
+    #allocationBars{margin-top:14px}
+    .asset-layout,.home-layout,.metric-grid{min-width:0}
+    .seg{max-width:100%;overflow-x:auto}
+    @media(min-width:760px){
+      .app{max-width:100%;padding-left:320px;padding-right:42px}
+      .home-layout{grid-template-columns:minmax(0,1.2fr) minmax(320px,.8fr)}
+      .asset-layout{grid-template-columns:minmax(0,1fr) minmax(360px,.9fr)}
+      .amount{font-size:clamp(42px,5.5vw,96px)}
+      .hero{min-width:0}
+      .metric b{font-size:clamp(18px,1.8vw,28px);overflow-wrap:anywhere}
+    }
+    @media(max-width:520px){
+      .top-actions{flex-wrap:wrap}
+      .hero-grid{grid-template-columns:1fr;gap:20px}
+      .ring{justify-self:center}
+      .metric-grid{grid-template-columns:1fr}
+      .page-title{font-size:clamp(42px,13vw,54px)}
+      .amount{font-size:clamp(36px,12vw,48px)}
+      .chart-card canvas{height:220px!important}
+      #donutChart{height:210px!important;max-height:210px!important}
+    }
+  </style>
 </head>
 <body>
-  <div class="orb orb-a"></div><div class="orb orb-b"></div>
-
-  <section id="loginView" class="login-shell">
-    <div class="login-card glass">
-      <div class="logo-mark">🔥</div>
-      <h1>FIRE OS 2.3.1</h1>
-      <p>Bilingual Mobile UI Edition</p>
-      <button id="googleLoginBtn" class="primary-btn" data-i18n="auth.google">使用 Google 登入</button>
-      <p class="tiny" data-i18n="auth.note">登入後資料會同步到 Firebase Firestore。</p>
-    </div>
-  </section>
-
-  <main id="appView" class="app hidden">
-    <aside class="sidebar glass">
-      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.3.1</small></div>
-      <nav>
-        <button class="nav active" data-page="dashboard"><span class="nav-ico">🏠</span><span class="nav-text" data-i18n="nav.dashboard">Dashboard</span></button>
-        <button class="nav" data-page="assets"><span class="nav-ico">💰</span><span class="nav-text" data-i18n="nav.assets">Assets</span></button>
-        <button class="nav" data-page="investments"><span class="nav-ico">📈</span><span class="nav-text" data-i18n="nav.investments">Investments</span></button>
-        <button class="nav" data-page="cashflow"><span class="nav-ico">💵</span><span class="nav-text" data-i18n="nav.cashflow">Cashflow</span></button>
-        <button class="nav" data-page="fire"><span class="nav-ico">🎯</span><span class="nav-text" data-i18n="nav.fire">FIRE</span></button>
-        <button class="nav" data-page="journal"><span class="nav-ico">📅</span><span class="nav-text" data-i18n="nav.journal">Journal</span></button>
-        <button class="nav" data-page="ai"><span class="nav-ico">🤖</span><span class="nav-text" data-i18n="nav.ai">AI Coach</span></button>
-        <button class="nav" data-page="settings"><span class="nav-ico">⚙️</span><span class="nav-text" data-i18n="nav.settings">Settings</span></button>
-      </nav>
-      <div class="profile-mini">
-        <img id="userPhoto" alt="user" />
-        <div><strong id="userName">User</strong><span id="userEmail"></span></div>
-      </div>
-      <button id="logoutBtn" class="ghost-btn" data-i18n="common.logout">登出</button>
-    </aside>
-
-    <section class="content">
-      <header class="topbar">
-        <div><p id="greeting" class="eyebrow">Good Evening</p><h1 id="pageTitle">Dashboard</h1></div>
-        <div class="top-actions"><select id="languageSelectTop" class="language-select small"><option value="zh">中文</option><option value="en">English</option></select><button id="installBtn" class="ghost-btn small hidden" data-i18n="common.install">安裝 App</button><button id="saveBtn" class="primary-btn small" data-i18n="common.sync">同步資料</button></div>
-      </header>
-
-      <section id="dashboard" class="page active-page dashboard-wallet">
-        <div class="wallet-toolbar">
-          <button class="circle-btn" aria-label="more">•••</button>
-          <button class="circle-btn" id="languageRoundBtn" aria-label="language">🌐</button>
-          <button class="circle-btn active" aria-label="dashboard">▥</button>
-        </div>
-
-        <div class="wealth-card glass">
-          <div class="wealth-head">
-            <div>
-              <p class="caption" data-i18n="dashboard.netWorth">淨資產 (NETWORTH)</p>
-              <h2 id="netWorthHero">NT$0</h2>
-            </div>
-            <span class="eye-mark">◉</span>
-          </div>
-
-          <div class="seg-row">
-            <span class="mini-icon">⌁</span>
-            <span data-i18n="dashboard.netWorth">淨資產 (TWD)</span>
-            <button class="mini-chip">↔ %</button>
-            <button class="mini-chip ghost">☝</button>
-            <div class="range-tabs"><span>近月</span><strong>今年</strong><span>全部</span></div>
-          </div>
-
-          <div class="chart-wrap">
-            <div class="chart-note">
-              <span>今年變動</span>
-              <strong id="yearChangeText" class="positive">+0 0%</strong>
-            </div>
-            <canvas id="netWorthChart"></canvas>
-          </div>
-
-          <div class="exposure-row">
-            <span>排除現金曝險</span>
-            <strong id="exCashExposure">NT$0</strong>
-            <em id="todayDelta" class="negative">今日 ▼ -$0</em>
-          </div>
-
-          <div class="allocation-strip" id="allocationStrip"></div>
-          <div class="allocation-legend" id="allocationLegend"></div>
-
-          <div class="wealth-stats">
-            <div><span>💼 總資產</span><strong id="kpiAssets">NT$0</strong></div>
-            <div><span>🪙 投資槓桿</span><strong id="leverageText">0.00x</strong></div>
-            <div><span>💳 總負債</span><strong id="kpiDebt" class="negative">NT$0</strong></div>
-          </div>
-        </div>
-
-        <div class="portfolio-card glass">
-          <div class="section-title-line">
-            <h3>◔ 投資組合</h3>
-            <button class="detail-pill">☷ 明細⌄</button>
-          </div>
-          <div class="portfolio-body">
-            <canvas id="assetChart"></canvas>
-            <div id="portfolioLegend" class="portfolio-legend"></div>
-          </div>
-        </div>
-
-        <div class="kpi-grid compact-grid">
-          <div class="card glass"><p data-i18n="dashboard.monthlyCashflow">Monthly Cashflow</p><h3 id="kpiCashflow">NT$0</h3></div>
-          <div class="card glass"><p data-i18n="dashboard.passiveCoverage">Passive Coverage</p><h3 id="kpiPassive">0%</h3></div>
-          <div class="card glass"><p>FIRE</p><h3 id="fireRing">0%</h3></div>
-          <div class="card glass"><p>Insight</p><h3 id="heroDelta">Cloud synced</h3></div>
-        </div>
-      </section>
-
-      <section id="assets" class="page">
-        <div class="section-head"><h2 data-i18n="assets.title">資產管理</h2><div class="inline-actions"><button class="primary-btn small" id="addAssetBtn" data-i18n="assets.addAsset">新增資產</button><button class="ghost-btn small" id="addLiabilityBtn" data-i18n="assets.addLiability">新增負債</button></div></div>
-        <div class="two-col no-top"><div class="card glass"><h3 data-i18n="assets.assets">資產</h3><div id="assetList" class="list"></div></div><div class="card glass"><h3 data-i18n="assets.liabilities">負債</h3><div id="liabilityList" class="list"></div></div></div>
-      </section>
-
-      <section id="investments" class="page">
-        <div class="section-head"><h2 data-i18n="investments.title">投資組合</h2><button class="primary-btn small" id="addInvestmentBtn" data-i18n="investments.add">新增投資</button></div>
-        <div id="investmentList" class="list"></div>
-      </section>
-
-      <section id="cashflow" class="page">
-        <div class="two-col">
-          <div class="card glass"><h3 data-i18n="cashflow.income">每月收入</h3><div id="incomeList"></div><button class="ghost-btn full" id="addIncomeBtn" data-i18n="cashflow.addIncome">新增收入</button></div>
-          <div class="card glass"><h3 data-i18n="cashflow.expenses">每月支出</h3><div id="expenseList"></div><button class="ghost-btn full" id="addExpenseBtn" data-i18n="cashflow.addExpense">新增支出</button></div>
-        </div>
-      </section>
-
-      <section id="fire" class="page">
-        <div class="card glass fire-card">
-          <h2 data-i18n="fire.title">FIRE 模擬器</h2>
-          <label data-i18n="fire.goal">FIRE 目標金額</label><input id="fireGoalInput" class="money-input" />
-          <label data-i18n="fire.monthlyInvestment">每月投資金額</label><input id="monthlyInvestInput" class="money-input" />
-          <label data-i18n="fire.annualReturn">年化報酬率 (%)</label><input id="returnInput" type="number" />
-          <div class="summary-line"><span data-i18n="fire.eta">預估達成</span><strong id="fireEta">--</strong></div>
-          <div class="progress"><i id="fireProgress"></i></div>
-        </div>
-      </section>
-
-      <section id="journal" class="page">
-        <div class="section-head"><h2 data-i18n="journal.title">財務日誌</h2><div class="inline-actions"><button class="ghost-btn small" id="snapshotBtn" data-i18n="journal.snapshot">記錄本月快照</button><button class="primary-btn small" id="addJournalBtn" data-i18n="journal.add">新增日誌</button></div></div>
-        <div id="journalList" class="timeline"></div>
-      </section>
-
-      <section id="ai" class="page">
-        <div class="card glass"><h2 data-i18n="ai.title">AI Coach</h2><div id="aiInsights" class="insights"></div></div>
-      </section>
-
-      <section id="settings" class="page">
-        <div class="card glass settings-card">
-          <h2 data-i18n="settings.title">設定</h2>
-          <label data-i18n="settings.displayName">顯示名稱</label><input id="displayNameInput" />
-          <label data-i18n="settings.language">語言</label><select id="languageSelect"><option value="zh">中文</option><option value="en">English</option></select>
-          <label data-i18n="settings.emergencyMonths">預備金目標（月支出倍數）</label><input id="emergencyMonthsInput" type="number" />
-          <button id="exportBtn" class="ghost-btn full" data-i18n="settings.export">匯出 JSON 備份</button>
-          <button id="importBtn" class="ghost-btn full" data-i18n="settings.import">匯入 JSON 備份</button>
-          <input id="importFile" type="file" accept="application/json" class="hidden" />
-          <button id="resetDemoBtn" class="ghost-btn full danger" data-i18n="settings.reset">重置為示範資料</button>
-        </div>
-      </section>
-    </section>
+  <div class="login" id="login"><div class="login-card"><div class="logo">🔥</div><h1>FIRE OS</h1><p data-i18n="loginSub">用 Google 登入，讓你的財富資料雲端同步。</p><button class="primary" id="loginBtn" data-i18n="login">使用 Google 登入</button></div></div>
+  <main class="app" id="app">
+    <section class="page active" id="page-home"><div class="top-actions"><button class="circle-btn" id="langBtn">中 / EN</button><button class="circle-btn">🔔</button></div><div class="kicker" data-i18n="goodEvening">GOOD EVENING</div><h1 class="page-title" id="welcomeName">歡迎回來 👋</h1><div class="home-layout"><div class="glass hero"><div class="hero-grid"><div><div class="label">NET WORTH</div><div class="amount" id="netWorth">NT$0</div><div class="subline" id="homeSub">Cloud synced</div></div><div class="ring" id="fireRing"><b id="firePct">0%</b></div></div></div><div class="glass hero"><div class="label" data-i18n="ai">AI 今日洞察</div><div id="aiList"></div></div></div><div class="metric-grid"><div class="metric"><span data-i18n="totalAssets">總資產</span><b id="homeAssets">NT$0</b></div><div class="metric"><span data-i18n="totalDebt">總負債</span><b class="red" id="homeDebt">NT$0</b></div><div class="metric"><span data-i18n="cashflow">月現金流</span><b class="mint" id="homeCashflow">NT$0</b></div><div class="metric"><span data-i18n="fire">FIRE 進度</span><b class="gold" id="fireSmall">--</b></div></div></section>
+    <section class="page" id="page-assets"><div class="top-actions"><button class="circle-btn">↻</button><button class="circle-btn">⌁</button><button class="circle-btn">ⓘ</button></div><h1 class="page-title" data-i18n="myAssets">我的資產</h1><div class="asset-layout"><div><div class="glass hero"><div class="label" data-i18n="totalAssets">總資產</div><div class="amount" id="assetHeroAmount">NT$0</div><div class="subline" id="assetHeroChange">▲ Today +0</div><div class="seg" style="margin-top:22px;width:max-content"><button>7D</button><button class="active">30D</button><button>YTD</button><button>ALL</button></div></div><div class="glass chart-card"><canvas id="trendChart"></canvas></div></div><div><div class="glass chart-card"><div class="section" style="margin-top:0"><h2 data-i18n="allocation">資產配置</h2></div><canvas id="donutChart"></canvas><div id="allocationBars"></div></div><div class="glass chart-card"><div class="section" style="margin-top:0"><h2 data-i18n="list">資產列表</h2></div><div id="assetList"></div></div></div></div></section>
+    <section class="page" id="page-invest"><h1 class="page-title" data-i18n="invest">投資</h1><div class="glass hero"><div class="label">INVESTMENTS</div><div class="amount">Coming Soon</div><div class="subline">Investment detail will be the next sprint.</div></div></section>
+    <section class="page" id="page-debt"><h1 class="page-title" data-i18n="debt">負債</h1><div class="glass hero"><div class="label" data-i18n="totalDebt">總負債</div><div class="amount red" id="debtHeroAmount">NT$0</div></div><div id="debtList"></div></section>
+    <section class="page" id="page-settings"><h1 class="page-title" data-i18n="settings">設定</h1><div class="glass chart-card"><div class="profile"><img id="avatar"><div><strong id="email">--</strong><span>Google Account</span></div></div><button class="logout" id="logout" data-i18n="logout">登出</button></div></section>
+    <button class="fab" id="fab">+</button><nav class="bottom-nav"><button class="nav-btn active" id="nav-home" data-tab="home"><i>⌂</i><span data-i18n="home">首頁</span></button><button class="nav-btn" id="nav-assets" data-tab="assets"><i>▣</i><span data-i18n="assets">資產</span></button><button class="nav-btn" id="nav-invest" data-tab="invest"><i>◔</i><span data-i18n="invest">投資</span></button><button class="nav-btn" id="nav-debt" data-tab="debt"><i>▰</i><span data-i18n="debt">負債</span></button><button class="nav-btn" id="nav-settings" data-tab="settings"><i>⚙</i><span data-i18n="settings">設定</span></button></nav>
   </main>
-
-  <dialog id="editDialog" class="glass dialog">
-    <form method="dialog" id="editForm">
-      <h3 id="dialogTitle">新增</h3>
-      <div id="dialogFields"></div>
-      <div class="dialog-actions"><button type="button" id="deleteDialogBtn" class="ghost-btn danger hidden" data-i18n="common.delete">刪除</button><span class="spacer"></span><button class="ghost-btn" value="cancel" data-i18n="common.cancel">取消</button><button id="dialogSave" class="primary-btn" value="default" data-i18n="common.save">儲存</button></div>
-    </form>
-  </dialog>
-
-  <script type="module" src="assets/js/app.js"></script>
+  <div class="backdrop" id="sheet"><div class="sheet"><div class="sheet-head"><h2 id="sheetTitle">新增資產</h2><button class="x" id="sheetClose">×</button></div><div class="field"><label data-i18n="name">名稱</label><input id="assetName"></div><div class="field"><label data-i18n="type">類型</label><select id="assetType"><option value="cash">Cash</option><option value="etf">ETF</option><option value="stock">Stocks</option><option value="realEstate">Real Estate</option><option value="crypto">Crypto</option><option value="other">Other</option></select></div><div class="field"><label data-i18n="amount">金額</label><input id="assetAmount" inputmode="numeric"></div><div class="field"><label data-i18n="note">備註</label><textarea id="assetNote"></textarea></div><div class="sheet-actions"><button class="secondary" id="cancelAsset" data-i18n="cancel">取消</button><button class="primary" id="saveAsset" data-i18n="save">儲存</button></div><button class="danger" id="deleteAsset" style="display:none;width:100%;margin-top:12px" data-i18n="del">刪除</button></div></div>
 </body>
 </html>

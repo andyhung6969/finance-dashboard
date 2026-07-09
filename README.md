@@ -1,21 +1,13 @@
-# FIRE OS 2.3.1
+# FIRE OS 2.3.2
 
-Net Worth App inspired UI refresh based on FIRE OS 2.3.
+Pure HTML/CSS/JS version.
 
-## Highlights
+Highlights:
+- Net Worth inspired mobile-first UI
+- Assets page redesign
+- Asset add/edit/delete with Firestore sync
+- Bottom sheet interactions
+- Chinese / English language switch
+- Google Login + Firebase Firestore retained
 
-- Keeps FIRE OS 2.3 bilingual support
-- Keeps Firebase Google Login and Firestore sync
-- Redesigns Dashboard into a Net Worth card layout
-- Adds segmented time controls, exposure strip, allocation legend, and portfolio card
-- Keeps mobile bottom navigation fix from 2.3
-
-## Deploy
-
-Upload these files to the root of your GitHub Pages repository:
-
-- index.html
-- manifest.json
-- service-worker.js
-- assets/
-- README.md
+Deploy: upload everything in this folder to the GitHub repository root.
