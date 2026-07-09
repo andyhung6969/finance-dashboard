@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FIRE OS 2.5.5</title>
+  <title>FIRE OS 2.5.6</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="assets/css/style.css?v=2.5.5" />
+  <link rel="stylesheet" href="assets/css/style.css?v=2.5.6" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -14,8 +14,8 @@
   <section id="loginView" class="login-shell">
     <div class="login-card glass">
       <div class="logo-mark">🔥</div>
-      <h1>FIRE OS 2.5.5</h1>
-      <p>LINE Login Safety Edition</p>
+      <h1>FIRE OS 2.5.6</h1>
+      <p>Mobile Avatar Edition</p>
       <button id="lineLoginBtn" class="line-btn">使用 LINE 登入</button>
       <div class="login-divider"><span></span><small>OR</small><span></span></div>
       <button id="googleLoginBtn" class="primary-btn secondary-login">使用 Google 登入</button>
@@ -32,7 +32,7 @@
 
   <main id="appView" class="app hidden">
     <aside class="sidebar glass desktop-only">
-      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.5.5</small></div>
+      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.5.6</small></div>
       <nav class="desktop-nav">
         <button class="nav active" data-page="dashboard">🏠 Dashboard</button>
         <button class="nav" data-page="assets">💰 Assets</button>
@@ -55,7 +55,7 @@
         <div><p id="greeting" class="eyebrow">Good Evening</p><h1 id="pageTitle">Dashboard</h1></div>
         <div class="top-actions">
           <button id="installBtn" class="ghost-btn small hidden">安裝 App</button>
-          <button id="mobileLogoutBtn" class="ghost-btn small mobile-only" type="button">登出</button>
+          <img id="mobileUserPhoto" class="mobile-user-photo mobile-only" alt="user" /><button id="mobileLogoutBtn" class="ghost-btn small mobile-only" type="button">登出</button>
           <button id="saveBtn" class="primary-btn small">同步</button>
         </div>
       </header>
@@ -158,15 +158,6 @@
     </form>
   </dialog>
 
-  <script type="module" src="assets/js/app.js?v=2.5.5"></script>
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const mobileLogout = document.getElementById("mobileLogoutBtn");
-      const desktopLogout = document.getElementById("logoutBtn");
-      if (mobileLogout && desktopLogout) {
-        mobileLogout.addEventListener("click", () => desktopLogout.click());
-      }
-    });
-  </script>
+  <script type="module" src="assets/js/app.js?v=2.5.6"></script>
 </body>
 </html>

@@ -13,3 +13,6 @@
 .line-browser-notice{margin-top:18px;padding:16px;border-radius:18px;background:rgba(255,255,255,.08);border:1px solid rgba(39,229,143,.32);text-align:left}.line-browser-notice strong{display:block;margin-bottom:8px;color:var(--green)}.line-browser-notice p{margin:8px 0;color:var(--muted);line-height:1.55}.line-browser-notice .full{margin-top:10px;text-align:center}.login-card.line-browser-mode .line-btn{opacity:.45;filter:grayscale(.25)}
 
 .profile-mini img{object-fit:cover}.profile-mini img[src^="data:image"]{padding:0}
+
+.mobile-user-photo{width:38px;height:38px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,var(--green),var(--blue));border:1px solid rgba(255,255,255,.22);box-shadow:0 8px 24px rgba(0,0,0,.25);}
+@media(max-width:960px){.top-actions{align-items:center}.mobile-user-photo{display:block}}

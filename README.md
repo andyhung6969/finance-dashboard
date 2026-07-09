@@ -1,4 +1,4 @@
-# FIRE OS 2.5.5 - LINE Login Safety Edition
+# FIRE OS 2.5.6 - LINE Login Safety Edition
 
 Hotfix：避免 LINE App / iPhone 內建瀏覽器觸發 Firebase OIDC missing initial state 錯誤。
 
@@ -9,3 +9,9 @@ Hotfix：避免 LINE App / iPhone 內建瀏覽器觸發 Firebase OIDC missing in
 
 ## Note
 LINE App 內完整登入體驗之後應改走 LIFF。
+
+
+## 2.5.6
+
+- Mobile header now shows the Google / LINE profile photo.
+- Desktop layout unchanged.
