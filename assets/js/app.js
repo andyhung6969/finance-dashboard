@@ -71,7 +71,7 @@ const fieldConfigs = {
   journal:[["date","日期","date"],["title","標題","text"],["amount","金額","money"],["note","備註","textarea"]]
 };
 const defaultData = {
-  version:"3.0.4", onboardingCompleted:false, settings:{displayName:"", emergencyMonths:6, retirementAge:50}, fire:{goal:30000000, monthlyInvestment:60000, annualReturn:8},
+  version:"3.0.5", onboardingCompleted:false, settings:{displayName:"", emergencyMonths:6, retirementAge:50}, fire:{goal:30000000, monthlyInvestment:60000, annualReturn:8},
   assets:[{id:uid(),name:"現金 / 存款",type:"現金",amount:800000},{id:uid(),name:"房地產",type:"房產",amount:3000000},{id:uid(),name:"其他資產",type:"其他",amount:200000}],
   liabilities:[{id:uid(),name:"房貸",amount:2300000},{id:uid(),name:"信用卡",amount:0}],
   investments:[{id:uid(),symbol:"0050",name:"元大台灣50",cost:2300000,value:2850000,dividend:68000},{id:uid(),symbol:"VOO",name:"Vanguard S&P 500",cost:1200000,value:1560000,dividend:32000}],
@@ -86,7 +86,7 @@ function isLocalMode(){return authMode === "liff" || authMode === "guest"}
 function liffStorageKey(){return `fireos_liff_demo_${user?.uid || "guest"}`}
 function localStorageKey(){return `fireos_local_${user?.uid || "guest"}`}
 function userRef(){return doc(db,"users",user.uid)}
-function normalizeState(data){const base=clone(defaultData);const merged={...base,...(data||{})};["assets","liabilities","investments","income","expenses","journal","history"].forEach(k=>{if(!Array.isArray(merged[k]))merged[k]=[];merged[k]=merged[k].map(item=>({id:item.id||uid(),...item}))});merged.settings={...base.settings,...(merged.settings||{})};merged.fire={...base.fire,...(merged.fire||{})};merged.version="3.0.3";return merged}
+function normalizeState(data){const base=clone(defaultData);const merged={...base,...(data||{})};["assets","liabilities","investments","income","expenses","journal","history"].forEach(k=>{if(!Array.isArray(merged[k]))merged[k]=[];merged[k]=merged[k].map(item=>({id:item.id||uid(),...item}))});merged.settings={...base.settings,...(merged.settings||{})};merged.fire={...base.fire,...(merged.fire||{})};merged.version="3.0.5";return merged}
 async function loadData(){
   let isNewUser = false;
   if (isLocalMode()) {
@@ -467,6 +467,48 @@ async function logout(){
   await signOut(auth);
 }
 function switchPage(page){document.querySelectorAll(".nav,.mobile-nav-item").forEach(x=>x.classList.toggle("active",x.dataset.page===page));document.querySelectorAll(".page").forEach(x=>x.classList.remove("active-page"));$(page).classList.add("active-page");$("pageTitle").textContent=pageTitles[page]||page;renderCharts();document.querySelector(".content")?.scrollTo?.({top:0,behavior:"smooth"});window.scrollTo({top:0,behavior:"smooth"})}
-function bind(){document.querySelectorAll(".nav,.mobile-nav-item").forEach(button=>{button.onclick=()=>switchPage(button.dataset.page)});$("lineLoginBtn").onclick=()=>{ if(isMobileLike()) return handleLiffLogin(); return signInWithPopup(auth,lineProvider); };$("googleLoginBtn").onclick=()=>signInWithPopup(auth,provider);if($("guestExperienceBtn"))$("guestExperienceBtn").onclick=()=>startGuestExperience();if($("onboardingNextBtn"))$("onboardingNextBtn").onclick=()=>nextOnboarding();if($("onboardingBackBtn"))$("onboardingBackBtn").onclick=()=>prevOnboarding();$("linkLineBtn").onclick=()=>{ if(isMobileLike()) return alert("手機版目前使用 LINE 登入，帳號連結請先在桌機版操作。"); return linkProvider(lineProvider,"LINE"); };$("linkGoogleBtn").onclick=()=>linkProvider(provider,"Google");$("logoutBtn").onclick=()=>logout();if($("mobileLogoutBtn"))$("mobileLogoutBtn").onclick=()=>logout();$("saveBtn").onclick=async()=>{await saveData();alert("已同步到 Firestore")};$("addAssetBtn").onclick=()=>add("asset");$("addLiabilityBtn").onclick=()=>add("liability");$("addInvestmentBtn").onclick=()=>add("investment");$("addIncomeBtn").onclick=()=>add("income");$("addExpenseBtn").onclick=()=>add("expense");$("addJournalBtn").onclick=()=>add("journal");$("snapshotBtn").onclick=recordMonthlySnapshot;$("exportBtn").onclick=exportData;$("importBtn").onclick=()=>$("importFile").click();$("importFile").onchange=importData;$("editForm").onsubmit=submitEdit;$("deleteDialogBtn").onclick=deleteEditingItem;$("fireGoalInput").oninput=e=>{state.fire.goal=raw(e.target.value);e.target.value=nf(state.fire.goal);renderAll();saveData()};$("monthlyInvestInput").oninput=e=>{state.fire.monthlyInvestment=raw(e.target.value);e.target.value=nf(state.fire.monthlyInvestment);renderAll();saveData()};$("returnInput").oninput=e=>{state.fire.annualReturn=raw(e.target.value);renderAll();saveData()};$("displayNameInput").oninput=e=>{state.settings.displayName=e.target.value;renderUser();saveData()};$("emergencyMonthsInput").oninput=e=>{state.settings.emergencyMonths=raw(e.target.value);renderAI();saveData()};$("resetDemoBtn").onclick=async()=>{if(confirm("確定重置成示範資料？目前資料會被覆蓋。")){state=clone(defaultData);state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};await saveAndRender()}}}
+function doLineLogin(){ return isMobileLike() ? handleLiffLogin() : signInWithPopup(auth,lineProvider); }
+function doGoogleLogin(){ return signInWithPopup(auth,provider); }
+function on(id, event, handler){ const el=$(id); if(el) el.addEventListener(event, handler); }
+function bind(){
+  document.querySelectorAll(".nav,.mobile-nav-item").forEach(button=>{button.onclick=()=>switchPage(button.dataset.page)});
+  on("lineLoginBtn","click",(e)=>{e.preventDefault(); doLineLogin();});
+  on("googleLoginBtn","click",(e)=>{e.preventDefault(); doGoogleLogin();});
+  on("guestExperienceBtn","click",(e)=>{e.preventDefault(); startGuestExperience();});
+  on("onboardingNextBtn","click",(e)=>{e.preventDefault(); nextOnboarding();});
+  on("onboardingBackBtn","click",(e)=>{e.preventDefault(); prevOnboarding();});
+  on("linkLineBtn","click",()=>{ if(isMobileLike()) return alert("手機版目前使用 LINE 登入，帳號連結請先在桌機版操作。"); return linkProvider(lineProvider,"LINE"); });
+  on("linkGoogleBtn","click",()=>linkProvider(provider,"Google"));
+  on("logoutBtn","click",()=>logout());
+  on("mobileLogoutBtn","click",()=>logout());
+  on("saveBtn","click",async()=>{await saveData();alert("已同步到 Firestore")});
+  on("addAssetBtn","click",()=>add("asset"));
+  on("addLiabilityBtn","click",()=>add("liability"));
+  on("addInvestmentBtn","click",()=>add("investment"));
+  on("addIncomeBtn","click",()=>add("income"));
+  on("addExpenseBtn","click",()=>add("expense"));
+  on("addJournalBtn","click",()=>add("journal"));
+  on("snapshotBtn","click",recordMonthlySnapshot);
+  on("exportBtn","click",exportData);
+  on("importBtn","click",()=>$("importFile")?.click());
+  const importFile=$("importFile"); if(importFile) importFile.onchange=importData;
+  const editForm=$("editForm"); if(editForm) editForm.onsubmit=submitEdit;
+  on("deleteDialogBtn","click",deleteEditingItem);
+  const fireGoalInput=$("fireGoalInput"); if(fireGoalInput) fireGoalInput.oninput=e=>{state.fire.goal=raw(e.target.value);e.target.value=nf(state.fire.goal);renderAll();saveData()};
+  const monthlyInvestInput=$("monthlyInvestInput"); if(monthlyInvestInput) monthlyInvestInput.oninput=e=>{state.fire.monthlyInvestment=raw(e.target.value);e.target.value=nf(state.fire.monthlyInvestment);renderAll();saveData()};
+  const returnInput=$("returnInput"); if(returnInput) returnInput.oninput=e=>{state.fire.annualReturn=raw(e.target.value);renderAll();saveData()};
+  const displayNameInput=$("displayNameInput"); if(displayNameInput) displayNameInput.oninput=e=>{state.settings.displayName=e.target.value;renderUser();saveData()};
+  const emergencyMonthsInput=$("emergencyMonthsInput"); if(emergencyMonthsInput) emergencyMonthsInput.oninput=e=>{state.settings.emergencyMonths=raw(e.target.value);renderAI();saveData()};
+  on("resetDemoBtn","click",async()=>{if(confirm("確定重置成示範資料？目前資料會被覆蓋。")){state=clone(defaultData);state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};await saveAndRender()}});
+  // Mobile Safari / PWA fallback: delegated click catches taps even if a button was re-rendered or old onclick binding failed.
+  document.addEventListener("click", event => {
+    const target = event.target.closest?.("#lineLoginBtn,#googleLoginBtn,#guestExperienceBtn");
+    if(!target) return;
+    event.preventDefault();
+    if(target.id === "lineLoginBtn") return doLineLogin();
+    if(target.id === "googleLoginBtn") return doGoogleLogin();
+    if(target.id === "guestExperienceBtn") return startGuestExperience();
+  }, true);
+}
 setDailyQuote();bind();setupPWA();applyMobileLineSafety();
 onAuthStateChanged(auth,async currentUser=>{if(isLocalMode())return;user=currentUser;if(currentUser){authMode="firebase";$("loginView").classList.add("hidden");$("appView").classList.remove("hidden");await loadData()}else{$("loginView").classList.remove("hidden");$("appView").classList.add("hidden")}});
