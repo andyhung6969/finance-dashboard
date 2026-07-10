@@ -1,15 +1,11 @@
-# FIRE OS 2.6.5 — Login Center Polish
+# FIRE OS 2.6.6 - Asset Allocation Redesign
 
-這版只做小幅 UI 調整，登入邏輯與 Firebase 不變。
+這版只改「資產配置」卡片：
 
-## 更新內容
+- 重新設計高質感資產配置卡片
+- Doughnut 圖改為圓角、間距、陰影效果
+- 中央顯示總資產
+- 右側顯示資產比例明細
+- 保留 2.6.5 登入頁置中與 Crafted by 洪彥安
 
-- 登入頁改成極簡版
-- 版本號移到登入頁底部
-- 加入 `Crafted by 洪彥安`
-- 手機版首頁：資產配置移到淨資產下方
-- 保留 2.6.2 的 LIFF Login + 首頁語錄
-
-## 部署
-
-把檔案全部放到 GitHub Pages repository 根目錄覆蓋即可。
+未改動 Firebase / Firestore / 登入邏輯。

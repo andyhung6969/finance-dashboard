@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FIRE OS 2.6.5</title>
+  <title>FIRE OS 2.6.6</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="assets/css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -20,7 +20,7 @@
         <button id="googleLoginBtn" class="primary-btn secondary-login">使用 Google 登入</button>
       </div>
       <div class="login-footer">
-        <div class="login-version">v2.6.5</div>
+        <div class="login-version">v2.6.6</div>
         <div class="login-crafted">Crafted by 洪彥安</div>
       </div>
     </div>
@@ -28,7 +28,7 @@
 
   <main id="appView" class="app hidden">
     <aside class="sidebar glass desktop-only">
-      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.6.5</small></div>
+      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.6.6</small></div>
       <nav class="desktop-nav">
         <button class="nav active" data-page="dashboard">🏠 首頁</button>
         <button class="nav" data-page="assets">💰 Assets</button>
@@ -68,7 +68,17 @@
           <div class="card glass"><p>Passive Coverage</p><h3 id="kpiPassive">0%</h3></div>
         </div>
         <div class="two-col dashboard-charts">
-          <div class="card glass asset-chart-card"><h3>資產配置</h3><canvas id="assetChart"></canvas></div>
+          <div class="card glass asset-chart-card asset-allocation-card">
+            <div class="asset-card-header">
+              <div class="asset-title-wrap"><span class="asset-title-icon">◔</span><div><h3>資產配置</h3><p>投資組合分布</p></div></div>
+              <button class="asset-detail-pill" type="button">☷ 明細⌄</button>
+            </div>
+            <div class="asset-allocation-body">
+              <div class="asset-chart-wrap"><canvas id="assetChart"></canvas></div>
+              <div id="assetLegend" class="asset-legend"></div>
+            </div>
+            <div class="asset-card-footer"><span>ⓘ 資料來源：你的帳戶與資產資料</span><span id="assetUpdatedAt">最後更新：剛剛</span></div>
+          </div>
           <div class="card glass networth-chart-card"><h3>淨資產趨勢</h3><canvas id="netWorthChart"></canvas></div>
         </div>
       </section>

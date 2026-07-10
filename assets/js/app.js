@@ -5,6 +5,30 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
 const firebaseConfig = { apiKey:"AIzaSyB5jUo6VmTNTRtCfwWhkwwXLYv1dcTSSi4", authDomain:"fire-dashboard-86bb9.firebaseapp.com", projectId:"fire-dashboard-86bb9", storageBucket:"fire-dashboard-86bb9.firebasestorage.app", messagingSenderId:"153073679515", appId:"1:153073679515:web:f49de492d1e79109fd1a3e", measurementId:"G-T34VDEFP7J" };
 const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app); const provider = new GoogleAuthProvider(); const lineProvider = new OAuthProvider("oidc.oidc.line");
 let deferredInstallPrompt = null, user = null, state = null, charts = {}, editing = { kind:null, id:null }, authMode = "firebase";
+const assetCenterTextPlugin = {
+  id: "assetCenterText",
+  afterDraw(chart, args, options) {
+    if (!options || !options.lines || chart.config.type !== "doughnut") return;
+    const { ctx, chartArea } = chart;
+    if (!chartArea) return;
+    const x = (chartArea.left + chartArea.right) / 2;
+    const y = (chartArea.top + chartArea.bottom) / 2;
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "rgba(234,242,255,.55)";
+    ctx.font = "700 13px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+    ctx.fillText(options.lines[0] || "總資產", x, y - 18);
+    ctx.fillStyle = "#fff";
+    ctx.font = "900 22px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+    ctx.fillText(options.lines[1] || "", x, y + 8);
+    ctx.fillStyle = "rgba(39,229,143,.72)";
+    ctx.font = "800 15px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+    ctx.fillText(options.lines[2] || "100%", x, y + 35);
+    ctx.restore();
+  }
+};
+if (window.Chart) Chart.register(assetCenterTextPlugin);
 const LIFF_ID = "2010658416-sSuwKltu";
 const $ = id => document.getElementById(id);
 const fmt = n => "NT$" + Math.round(Number(n)||0).toLocaleString("zh-TW");
@@ -47,19 +71,19 @@ const fieldConfigs = {
   journal:[["date","日期","date"],["title","標題","text"],["amount","金額","money"],["note","備註","textarea"]]
 };
 const defaultData = {
-  version:"2.6.5", settings:{displayName:"", emergencyMonths:6}, fire:{goal:30000000, monthlyInvestment:60000, annualReturn:8},
+  version:"2.6.6", settings:{displayName:"", emergencyMonths:6}, fire:{goal:30000000, monthlyInvestment:60000, annualReturn:8},
   assets:[{id:uid(),name:"現金 / 存款",type:"現金",amount:800000},{id:uid(),name:"房地產",type:"房產",amount:3000000},{id:uid(),name:"其他資產",type:"其他",amount:200000}],
   liabilities:[{id:uid(),name:"房貸",amount:2300000},{id:uid(),name:"信用卡",amount:0}],
   investments:[{id:uid(),symbol:"0050",name:"元大台灣50",cost:2300000,value:2850000,dividend:68000},{id:uid(),symbol:"VOO",name:"Vanguard S&P 500",cost:1200000,value:1560000,dividend:32000}],
   income:[{id:uid(),name:"薪水",amount:95000},{id:uid(),name:"租金",amount:18000},{id:uid(),name:"股息 / 利息",amount:12000}],
   expenses:[{id:uid(),name:"生活費",amount:30000},{id:uid(),name:"房貸",amount:25800},{id:uid(),name:"保險",amount:5000}],
-  journal:[{id:uid(),date:today(),title:"建立 FIRE OS 2.6.5",amount:0,note:"LIFF Login + 首頁每日語錄。"}],
+  journal:[{id:uid(),date:today(),title:"建立 FIRE OS 2.6.6",amount:0,note:"LIFF Login + 首頁每日語錄。"}],
   history:[{id:uid(),month:"2025-04",netWorth:5900000},{id:uid(),month:"2025-05",netWorth:6150000},{id:uid(),month:"2025-06",netWorth:6420000},{id:uid(),month:"2025-07",netWorth:6810000},{id:uid(),month:"2025-08",netWorth:7200000}]
 };
 function isLiffMode(){return authMode === "liff"}
 function liffStorageKey(){return `fireos_liff_demo_${user?.uid || "guest"}`}
 function userRef(){return doc(db,"users",user.uid)}
-function normalizeState(data){const base=clone(defaultData);const merged={...base,...(data||{})};["assets","liabilities","investments","income","expenses","journal","history"].forEach(k=>{if(!Array.isArray(merged[k]))merged[k]=[];merged[k]=merged[k].map(item=>({id:item.id||uid(),...item}))});merged.settings={...base.settings,...(merged.settings||{})};merged.fire={...base.fire,...(merged.fire||{})};merged.version="2.6.5";return merged}
+function normalizeState(data){const base=clone(defaultData);const merged={...base,...(data||{})};["assets","liabilities","investments","income","expenses","journal","history"].forEach(k=>{if(!Array.isArray(merged[k]))merged[k]=[];merged[k]=merged[k].map(item=>({id:item.id||uid(),...item}))});merged.settings={...base.settings,...(merged.settings||{})};merged.fire={...base.fire,...(merged.fire||{})};merged.version="2.6.6";return merged}
 async function loadData(){
   if (isLiffMode()) {
     const cached = localStorage.getItem(liffStorageKey());
@@ -164,7 +188,55 @@ function emptyText(text){return`<div class="empty">${text}</div>`}
 function renderFire(){const f=calcFire();$("fireGoalInput").value=nf(state.fire.goal);$("monthlyInvestInput").value=nf(state.fire.monthlyInvestment);$("returnInput").value=state.fire.annualReturn;$("fireProgress").style.width=f.percent+"%";if(f.months===null)$("fireEta").textContent="超過 100 年";else{const d=new Date();d.setMonth(d.getMonth()+f.months);$("fireEta").textContent=`${Math.floor(f.months/12)} 年 ${f.months%12} 個月 · ${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,"0")}`}}
 function renderAI(){const t=totals(), f=calcFire();const cash=state.assets.find(x=>/現金|存款/i.test(x.name))?.amount||0;const emergency=t.expenses*(state.settings.emergencyMonths||6);const topExpense=[...state.expenses].sort((a,b)=>raw(b.amount)-raw(a.amount))[0];const insights=[`你的目前淨資產為 ${fmt(t.netWorth)}，FIRE 進度 ${f.percent.toFixed(1)}%。`,`本月收入 ${fmt(t.income)}、支出 ${fmt(t.expenses)}，儲蓄率約 ${t.savingRate.toFixed(1)}%。`,topExpense?`目前最大支出是「${topExpense.name}」${fmt(topExpense.amount)}，可以優先檢查是否有優化空間。`:"尚無支出資料，可以先建立每月支出。",raw(cash)<emergency?`現金預備金低於 ${state.settings.emergencyMonths} 個月支出目標，建議逐步提高到 ${fmt(emergency)}。`:`現金預備金看起來充足，已達 ${state.settings.emergencyMonths} 個月支出目標。`,`若每月投資維持 ${fmt(state.fire.monthlyInvestment)}，預估約 ${$("fireEta").textContent} 達成 FIRE。`];$("aiInsights").innerHTML=insights.map(x=>`<div class="insight">${escapeHTML(x)}</div>`).join("")}
 function chart(key,el,type,data,options={}){if(!$(el))return;if(charts[key])charts[key].destroy();charts[key]=new Chart($(el),{type,data,options})}
-function renderCharts(){if(!$("assetChart")||!state)return;const assetLabels=[...state.assets.map(x=>x.name),...state.investments.map(x=>x.symbol||x.name)], assetData=[...state.assets.map(x=>raw(x.amount)),...state.investments.map(x=>raw(x.value))];chart("asset","assetChart","doughnut",{labels:assetLabels,datasets:[{data:assetData}]});const history=[...state.history].sort((a,b)=>String(a.month).localeCompare(String(b.month)));chart("nw","netWorthChart","line",{labels:history.map(x=>x.month),datasets:[{label:"Net Worth",data:history.map(x=>raw(x.netWorth)),tension:.35}]},{scales:{y:{beginAtZero:false}}})}
+function renderCharts(){
+  if(!$("assetChart")||!state)return;
+  const t=totals();
+  const palette=["#cf7e8e","#98a3af","#72a9df","#67c49a","#e0c36f","#a97bd4","#e76f3c","#5cc9d6","#f59eb1","#8bd17c"];
+  const items=[
+    ...state.assets.map(x=>({name:x.name,value:raw(x.amount)})),
+    ...state.investments.map(x=>({name:x.symbol||x.name,value:raw(x.value)}))
+  ].filter(x=>x.value>0).sort((a,b)=>b.value-a.value);
+  const total=items.reduce((sum,x)=>sum+x.value,0)||1;
+  const labels=items.map(x=>x.name);
+  const data=items.map(x=>x.value);
+  chart("asset","assetChart","doughnut",{
+    labels,
+    datasets:[{
+      data,
+      backgroundColor:palette.slice(0,data.length),
+      borderColor:"rgba(8,17,31,.82)",
+      borderWidth:3,
+      borderRadius:10,
+      spacing:3,
+      hoverOffset:8
+    }]
+  },{
+    responsive:true,
+    maintainAspectRatio:false,
+    cutout:"58%",
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        backgroundColor:"rgba(8,17,31,.92)",
+        titleColor:"#fff",
+        bodyColor:"#eaf2ff",
+        borderColor:"rgba(255,255,255,.14)",
+        borderWidth:1,
+        callbacks:{label:(ctx)=>` ${ctx.label}: ${fmt(ctx.raw)} (${((ctx.raw/total)*100).toFixed(1)}%)`}
+      },
+      assetCenterText:{lines:["總資產",fmt(t.assets),"100%"]}
+    }
+  });
+  const legend=$("assetLegend");
+  if(legend){
+    const top=items.slice(0,8);
+    legend.innerHTML=top.map((x,i)=>`<div class="asset-legend-row"><i class="asset-legend-swatch" style="color:${palette[i%palette.length]}"></i><span class="asset-legend-name">${escapeHTML(x.name)}</span><strong class="asset-legend-pct">${((x.value/total)*100).toFixed(1)}%</strong><span class="asset-legend-arrow">›</span></div>`).join("") || emptyText("尚無資產配置資料");
+  }
+  const updated=$("assetUpdatedAt");
+  if(updated) updated.textContent="最後更新："+new Date().toLocaleString("zh-TW",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"});
+  const history=[...state.history].sort((a,b)=>String(a.month).localeCompare(String(b.month)));
+  chart("nw","netWorthChart","line",{labels:history.map(x=>x.month),datasets:[{label:"Net Worth",data:history.map(x=>raw(x.netWorth)),tension:.35}]},{scales:{y:{beginAtZero:false}}});
+}
 function getCollection(kind){const key=collectionMap[kind];return key?state[key]:null}
 function openEdit(kind,id){const dialog=$("editDialog"), fields=$("dialogFields"), arr=getCollection(kind);if(!arr)return alert("未知資料類型："+kind);const config=fieldConfigs[kind];editing={kind,id};const item=id?arr.find(x=>x.id===id):{id:uid(),date:kind==="journal"?today():undefined};if(!item)return alert("找不到這筆資料");$("dialogTitle").textContent=(id?"編輯":"新增")+" "+labelOf(kind);fields.innerHTML=config.map(([key,label,type])=>{const value=type==="money"?nf(item[key]):(item[key]??"");if(type==="textarea")return`<label>${label}</label><textarea name="${key}">${escapeHTML(value)}</textarea>`;return`<label>${label}</label><input name="${key}" type="${type==="date"?"date":"text"}" value="${escapeHTML(value)}">`}).join("");$("deleteDialogBtn").classList.toggle("hidden",!id);dialog.showModal()}
 async function submitEdit(event){event.preventDefault();const{kind,id}=editing, arr=getCollection(kind), config=fieldConfigs[kind];if(!arr||!config)return;let item=id?arr.find(x=>x.id===id):{id:uid()};if(!item)return;const formData=new FormData(event.target);config.forEach(([key,,type])=>{const value=formData.get(key);item[key]=type==="money"?raw(value):value});if(!id)arr.unshift(item);await saveData();$("editDialog").close();renderAll()}
