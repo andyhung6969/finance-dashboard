@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FIRE OS 2.5.2 Stable</title>
+  <title>FIRE OS 2.6.2</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="assets/css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,19 +14,19 @@
   <section id="loginView" class="login-shell">
     <div class="login-card glass">
       <div class="logo-mark">🔥</div>
-      <h1>FIRE OS 2.5.2 Stable</h1>
-      <p>Stable Edition</p>
+      <h1>FIRE OS 2.6.2</h1>
+      <p>LIFF Demo Login + 首頁語錄</p>
       <button id="lineLoginBtn" class="line-btn">使用 LINE 登入</button>
-      <p id="mobileLineNotice" class="tiny mobile-line-notice hidden">手機版 LINE 登入開發中，請先使用 Google 登入。</p>
+      <p id="mobileLineNotice" class="tiny mobile-line-notice hidden">手機版會使用 LIFF Demo Login，不需 Cloud Functions；資料會先保存在此裝置。</p>
       <div class="login-divider"><span></span><small>OR</small><span></span></div>
       <button id="googleLoginBtn" class="primary-btn secondary-login">使用 Google 登入</button>
-      <p class="tiny">LINE Login + Google Login + Account Linking，登入後資料同步到 Firebase Firestore。</p>
+      <p class="tiny">手機 LINE App 內使用 LIFF Demo Login；桌機保留 Firebase LINE / Google Login。</p>
     </div>
   </section>
 
   <main id="appView" class="app hidden">
     <aside class="sidebar glass desktop-only">
-      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.5.2</small></div>
+      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.6.2</small></div>
       <nav class="desktop-nav">
         <button class="nav active" data-page="dashboard">🏠 首頁</button>
         <button class="nav" data-page="assets">💰 Assets</button>
@@ -152,6 +152,7 @@
     </form>
   </dialog>
 
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script type="module" src="assets/js/app.js"></script>
 </body>
 </html>
