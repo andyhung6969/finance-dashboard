@@ -31,7 +31,7 @@ const defaultData = {
   investments:[{id:uid(),symbol:"0050",name:"元大台灣50",cost:2300000,value:2850000,dividend:68000},{id:uid(),symbol:"VOO",name:"Vanguard S&P 500",cost:1200000,value:1560000,dividend:32000}],
   income:[{id:uid(),name:"薪水",amount:95000},{id:uid(),name:"租金",amount:18000},{id:uid(),name:"股息 / 利息",amount:12000}],
   expenses:[{id:uid(),name:"生活費",amount:30000},{id:uid(),name:"房貸",amount:25800},{id:uid(),name:"保險",amount:5000}],
-  journal:[{id:uid(),date:today(),title:"建立 FIRE OS 2.6",amount:0,note:"LIFF Demo Login：手機 LINE App 內可用 LINE profile 進入 demo。"}],
+  journal:[{id:uid(),date:today(),title:"建立 FIRE OS 2.6.1",amount:0,note:"LIFF Demo Login：手機 LINE App 內可用 LINE profile 進入 demo。"}],
   history:[{id:uid(),month:"2025-04",netWorth:5900000},{id:uid(),month:"2025-05",netWorth:6150000},{id:uid(),month:"2025-06",netWorth:6420000},{id:uid(),month:"2025-07",netWorth:6810000},{id:uid(),month:"2025-08",netWorth:7200000}]
 };
 function isLiffMode(){return authMode === "liff"}
@@ -134,7 +134,29 @@ async function linkProvider(provider, label){
   }
 }
 
-function renderUser(){$("userName").textContent=state.settings.displayName||user.displayName||"User";$("userEmail").textContent=user.email || (isLiffMode()?"LINE LIFF Demo":"");$("userPhoto").src=user.photoURL||"";$("displayNameInput").value=state.settings.displayName||"";$("emergencyMonthsInput").value=state.settings.emergencyMonths||6;renderAuthLinks()}
+function renderUser(){
+  const profileName = state.settings.displayName || user.displayName || state.profile?.name || "User";
+  const profilePhoto = user.photoURL || state.profile?.photo || "";
+  const profileEmail = user.email || (isLiffMode() ? "LINE LIFF Demo" : "");
+  $("userName").textContent = profileName;
+  $("userEmail").textContent = profileEmail;
+  $("userPhoto").src = profilePhoto;
+  if ($("mobileUserName")) $("mobileUserName").textContent = profileName;
+  if ($("mobileUserPhoto")) $("mobileUserPhoto").src = profilePhoto;
+  if ($("lineProfileCard")) {
+    if (isLiffMode()) {
+      $("lineProfileCard").classList.remove("hidden");
+      $("lineProfileName").textContent = profileName;
+      $("lineProfileProvider").textContent = "LINE LIFF Demo Login";
+      $("lineProfilePhoto").src = profilePhoto;
+    } else {
+      $("lineProfileCard").classList.add("hidden");
+    }
+  }
+  $("displayNameInput").value = state.settings.displayName || "";
+  $("emergencyMonthsInput").value = state.settings.emergencyMonths || 6;
+  renderAuthLinks();
+}
 function renderDashboard(){const t=totals(), f=calcFire();$("netWorthHero").textContent=fmt(t.netWorth);$("kpiAssets").textContent=fmt(t.assets);$("kpiDebt").textContent=fmt(t.debt);$("kpiCashflow").textContent=fmt(t.cashflow);$("kpiCashflow").className=t.cashflow>=0?"positive":"negative";$("kpiPassive").textContent=(t.expenses?Math.min((t.passive/t.expenses)*100,999):0).toFixed(1)+"%";$("fireRing").textContent=f.percent.toFixed(0)+"%";document.querySelector(".ring").style.setProperty("--p",f.percent+"%");$("heroDelta").textContent=`Cloud synced · 儲蓄率 ${t.savingRate.toFixed(1)}% · 負債比 ${t.debtRatio.toFixed(1)}%`}
 function simpleItemHTML(item,kind,options={}){const title=item.name||item.symbol||"未命名";const sub=options.sub||item.type||"";const amount=options.amount??raw(item.amount);return`<div class="item"><div><strong>${escapeHTML(title)}</strong><span>${escapeHTML(sub)}</span></div><div class="amount">${fmt(amount)}</div><button class="ghost-btn" data-edit="${kind}" data-id="${item.id}">編輯</button></div>`}
 function renderLists(){$("assetList").innerHTML=state.assets.map(x=>simpleItemHTML(x,"asset")).join("")||emptyText("尚無資產資料");$("liabilityList").innerHTML=state.liabilities.map(x=>simpleItemHTML(x,"liability",{sub:"負債"})).join("")||emptyText("尚無負債資料");$("investmentList").innerHTML=state.investments.map(x=>{const pnl=raw(x.value)-raw(x.cost), pct=raw(x.cost)?(pnl/raw(x.cost))*100:0;return`<div class="item"><div><strong>${escapeHTML(x.symbol||"投資")}</strong><span>${escapeHTML(x.name||"")} · 成本 ${fmt(x.cost)} · 股息 ${fmt(x.dividend)} · 報酬 ${pct.toFixed(1)}%</span></div><div class="amount ${pnl>=0?"positive":"negative"}">${fmt(x.value)}</div><button class="ghost-btn" data-edit="investment" data-id="${x.id}">編輯</button></div>`}).join("")||emptyText("尚無投資資料");$("incomeList").innerHTML=state.income.map(x=>simpleItemHTML(x,"income")).join("")||emptyText("尚無收入資料");$("expenseList").innerHTML=state.expenses.map(x=>simpleItemHTML(x,"expense")).join("")||emptyText("尚無支出資料");$("journalList").innerHTML=[...state.journal].sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(x=>`<div class="timeline-item"><strong>${escapeHTML(x.date||"未填日期")} · ${escapeHTML(x.title||"未命名")}</strong><p>${fmt(x.amount)}</p><span>${escapeHTML(x.note||"")}</span><button class="ghost-btn small" data-edit="journal" data-id="${x.id}">編輯</button></div>`).join("")||emptyText("尚無財務日誌");document.querySelectorAll("[data-edit]").forEach(button=>{button.onclick=()=>openEdit(button.dataset.edit,button.dataset.id)})}
