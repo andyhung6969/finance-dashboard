@@ -71,25 +71,26 @@ const fieldConfigs = {
   journal:[["date","日期","date"],["title","標題","text"],["amount","金額","money"],["note","備註","textarea"]]
 };
 const defaultData = {
-  version:"3.0.2", onboardingCompleted:false, settings:{displayName:"", emergencyMonths:6, retirementAge:50}, fire:{goal:30000000, monthlyInvestment:60000, annualReturn:8},
+  version:"3.0.3", onboardingCompleted:false, settings:{displayName:"", emergencyMonths:6, retirementAge:50}, fire:{goal:30000000, monthlyInvestment:60000, annualReturn:8},
   assets:[{id:uid(),name:"現金 / 存款",type:"現金",amount:800000},{id:uid(),name:"房地產",type:"房產",amount:3000000},{id:uid(),name:"其他資產",type:"其他",amount:200000}],
   liabilities:[{id:uid(),name:"房貸",amount:2300000},{id:uid(),name:"信用卡",amount:0}],
   investments:[{id:uid(),symbol:"0050",name:"元大台灣50",cost:2300000,value:2850000,dividend:68000},{id:uid(),symbol:"VOO",name:"Vanguard S&P 500",cost:1200000,value:1560000,dividend:32000}],
   income:[{id:uid(),name:"薪水",amount:95000},{id:uid(),name:"租金",amount:18000},{id:uid(),name:"股息 / 利息",amount:12000}],
   expenses:[{id:uid(),name:"生活費",amount:30000},{id:uid(),name:"房貸",amount:25800},{id:uid(),name:"保險",amount:5000}],
-  journal:[{id:uid(),date:today(),title:"建立 FIRE OS 3.0.2",amount:0,note:"First Time Experience：建立 FIRE 初始資料。"}],
+  journal:[{id:uid(),date:today(),title:"建立 FIRE OS 3.0.3",amount:0,note:"First Time Experience：建立 FIRE 初始資料。"}],
   history:[{id:uid(),month:"2025-04",netWorth:5900000},{id:uid(),month:"2025-05",netWorth:6150000},{id:uid(),month:"2025-06",netWorth:6420000},{id:uid(),month:"2025-07",netWorth:6810000},{id:uid(),month:"2025-08",netWorth:7200000}]
 };
 function isLiffMode(){return authMode === "liff"}
+function isGuestMode(){return authMode === "guest"}
 function isLocalMode(){return authMode === "liff" || authMode === "guest"}
 function liffStorageKey(){return `fireos_liff_demo_${user?.uid || "guest"}`}
 function localStorageKey(){return `fireos_local_${user?.uid || "guest"}`}
 function userRef(){return doc(db,"users",user.uid)}
-function normalizeState(data){const base=clone(defaultData);const merged={...base,...(data||{})};["assets","liabilities","investments","income","expenses","journal","history"].forEach(k=>{if(!Array.isArray(merged[k]))merged[k]=[];merged[k]=merged[k].map(item=>({id:item.id||uid(),...item}))});merged.settings={...base.settings,...(merged.settings||{})};merged.fire={...base.fire,...(merged.fire||{})};merged.version="3.0.2";return merged}
+function normalizeState(data){const base=clone(defaultData);const merged={...base,...(data||{})};["assets","liabilities","investments","income","expenses","journal","history"].forEach(k=>{if(!Array.isArray(merged[k]))merged[k]=[];merged[k]=merged[k].map(item=>({id:item.id||uid(),...item}))});merged.settings={...base.settings,...(merged.settings||{})};merged.fire={...base.fire,...(merged.fire||{})};merged.version="3.0.3";return merged}
 async function loadData(){
   let isNewUser = false;
   if (isLocalMode()) {
-    const cached = localStorage.getItem(localStorageKey());
+    const cached = isGuestMode() ? sessionStorage.getItem(localStorageKey()) : localStorage.getItem(localStorageKey());
     if (cached) {
       state = normalizeState(JSON.parse(cached));
     } else {
@@ -120,7 +121,9 @@ async function saveData(){
   if(!user||!state)return;
   if (isLocalMode()) {
     state.updatedAt = new Date().toISOString();
-    localStorage.setItem(localStorageKey(), JSON.stringify(state));
+    const payload = JSON.stringify(state);
+    if (isGuestMode()) sessionStorage.setItem(localStorageKey(), payload);
+    else localStorage.setItem(localStorageKey(), payload);
     return;
   }
   state.updatedAt=serverTimestamp();
@@ -340,9 +343,15 @@ function prevOnboarding(){
 async function startGuestExperience(){
   authMode = "guest";
   user = { uid:"guest", displayName:"體驗模式", email:"", photoURL:"" };
+  // 訪客模式每次都重新開始，不沿用之前的 demo 資料。
+  localStorage.removeItem(localStorageKey());
+  sessionStorage.removeItem(localStorageKey());
+  state = clone(defaultData);
+  state.profile = {uid:user.uid,email:"",name:user.displayName,photo:"",provider:"guest-demo"};
   $("loginView").classList.add("hidden");
   $("appView").classList.remove("hidden");
-  await loadData();
+  renderAll();
+  showOnboarding();
 }
 
 function setupPWA(){if("serviceWorker" in navigator)navigator.serviceWorker.register("./service-worker.js").catch(console.warn);window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();deferredInstallPrompt=event;const btn=$("installBtn");if(btn)btn.classList.remove("hidden")});const installBtn=$("installBtn");if(installBtn)installBtn.onclick=async()=>{if(!deferredInstallPrompt)return;deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;installBtn.classList.add("hidden")}}
@@ -393,6 +402,7 @@ function applyMobileLineSafety(){
 async function logout(){
   if (isLocalMode()) {
     try { if (isLiffMode() && window.liff && window.liff.isLoggedIn()) window.liff.logout(); } catch(e) {}
+    if (isGuestMode()) sessionStorage.removeItem(localStorageKey());
     authMode = "firebase"; user = null; state = null;
     $("appView").classList.add("hidden"); $("loginView").classList.remove("hidden");
     return;
