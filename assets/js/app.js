@@ -71,13 +71,13 @@ const fieldConfigs = {
   journal:[["date","日期","date"],["title","標題","text"],["amount","金額","money"],["note","備註","textarea"]]
 };
 const defaultData = {
-  version:"3.0.1", onboardingCompleted:false, settings:{displayName:"", emergencyMonths:6, retirementAge:50}, fire:{goal:30000000, monthlyInvestment:60000, annualReturn:8},
+  version:"3.0.2", onboardingCompleted:false, settings:{displayName:"", emergencyMonths:6, retirementAge:50}, fire:{goal:30000000, monthlyInvestment:60000, annualReturn:8},
   assets:[{id:uid(),name:"現金 / 存款",type:"現金",amount:800000},{id:uid(),name:"房地產",type:"房產",amount:3000000},{id:uid(),name:"其他資產",type:"其他",amount:200000}],
   liabilities:[{id:uid(),name:"房貸",amount:2300000},{id:uid(),name:"信用卡",amount:0}],
   investments:[{id:uid(),symbol:"0050",name:"元大台灣50",cost:2300000,value:2850000,dividend:68000},{id:uid(),symbol:"VOO",name:"Vanguard S&P 500",cost:1200000,value:1560000,dividend:32000}],
   income:[{id:uid(),name:"薪水",amount:95000},{id:uid(),name:"租金",amount:18000},{id:uid(),name:"股息 / 利息",amount:12000}],
   expenses:[{id:uid(),name:"生活費",amount:30000},{id:uid(),name:"房貸",amount:25800},{id:uid(),name:"保險",amount:5000}],
-  journal:[{id:uid(),date:today(),title:"建立 FIRE OS 3.0.1",amount:0,note:"First Time Experience：建立 FIRE 初始資料。"}],
+  journal:[{id:uid(),date:today(),title:"建立 FIRE OS 3.0.2",amount:0,note:"First Time Experience：建立 FIRE 初始資料。"}],
   history:[{id:uid(),month:"2025-04",netWorth:5900000},{id:uid(),month:"2025-05",netWorth:6150000},{id:uid(),month:"2025-06",netWorth:6420000},{id:uid(),month:"2025-07",netWorth:6810000},{id:uid(),month:"2025-08",netWorth:7200000}]
 };
 function isLiffMode(){return authMode === "liff"}
@@ -85,7 +85,7 @@ function isLocalMode(){return authMode === "liff" || authMode === "guest"}
 function liffStorageKey(){return `fireos_liff_demo_${user?.uid || "guest"}`}
 function localStorageKey(){return `fireos_local_${user?.uid || "guest"}`}
 function userRef(){return doc(db,"users",user.uid)}
-function normalizeState(data){const base=clone(defaultData);const merged={...base,...(data||{})};["assets","liabilities","investments","income","expenses","journal","history"].forEach(k=>{if(!Array.isArray(merged[k]))merged[k]=[];merged[k]=merged[k].map(item=>({id:item.id||uid(),...item}))});merged.settings={...base.settings,...(merged.settings||{})};merged.fire={...base.fire,...(merged.fire||{})};merged.version="3.0.1";return merged}
+function normalizeState(data){const base=clone(defaultData);const merged={...base,...(data||{})};["assets","liabilities","investments","income","expenses","journal","history"].forEach(k=>{if(!Array.isArray(merged[k]))merged[k]=[];merged[k]=merged[k].map(item=>({id:item.id||uid(),...item}))});merged.settings={...base.settings,...(merged.settings||{})};merged.fire={...base.fire,...(merged.fire||{})};merged.version="3.0.2";return merged}
 async function loadData(){
   let isNewUser = false;
   if (isLocalMode()) {
@@ -118,7 +118,7 @@ async function loadData(){
 }
 async function saveData(){
   if(!user||!state)return;
-  if (isLiffMode()) {
+  if (isLocalMode()) {
     state.updatedAt = new Date().toISOString();
     localStorage.setItem(localStorageKey(), JSON.stringify(state));
     return;
@@ -402,4 +402,4 @@ async function logout(){
 function switchPage(page){document.querySelectorAll(".nav,.mobile-nav-item").forEach(x=>x.classList.toggle("active",x.dataset.page===page));document.querySelectorAll(".page").forEach(x=>x.classList.remove("active-page"));$(page).classList.add("active-page");$("pageTitle").textContent=pageTitles[page]||page;renderCharts();document.querySelector(".content")?.scrollTo?.({top:0,behavior:"smooth"});window.scrollTo({top:0,behavior:"smooth"})}
 function bind(){document.querySelectorAll(".nav,.mobile-nav-item").forEach(button=>{button.onclick=()=>switchPage(button.dataset.page)});$("lineLoginBtn").onclick=()=>{ if(isMobileLike()) return handleLiffLogin(); return signInWithPopup(auth,lineProvider); };$("googleLoginBtn").onclick=()=>signInWithPopup(auth,provider);if($("guestExperienceBtn"))$("guestExperienceBtn").onclick=()=>startGuestExperience();if($("onboardingNextBtn"))$("onboardingNextBtn").onclick=()=>nextOnboarding();if($("onboardingBackBtn"))$("onboardingBackBtn").onclick=()=>prevOnboarding();$("linkLineBtn").onclick=()=>{ if(isMobileLike()) return alert("手機版目前使用 LINE 登入，帳號連結請先在桌機版操作。"); return linkProvider(lineProvider,"LINE"); };$("linkGoogleBtn").onclick=()=>linkProvider(provider,"Google");$("logoutBtn").onclick=()=>logout();if($("mobileLogoutBtn"))$("mobileLogoutBtn").onclick=()=>logout();$("saveBtn").onclick=async()=>{await saveData();alert("已同步到 Firestore")};$("addAssetBtn").onclick=()=>add("asset");$("addLiabilityBtn").onclick=()=>add("liability");$("addInvestmentBtn").onclick=()=>add("investment");$("addIncomeBtn").onclick=()=>add("income");$("addExpenseBtn").onclick=()=>add("expense");$("addJournalBtn").onclick=()=>add("journal");$("snapshotBtn").onclick=recordMonthlySnapshot;$("exportBtn").onclick=exportData;$("importBtn").onclick=()=>$("importFile").click();$("importFile").onchange=importData;$("editForm").onsubmit=submitEdit;$("deleteDialogBtn").onclick=deleteEditingItem;$("fireGoalInput").oninput=e=>{state.fire.goal=raw(e.target.value);e.target.value=nf(state.fire.goal);renderAll();saveData()};$("monthlyInvestInput").oninput=e=>{state.fire.monthlyInvestment=raw(e.target.value);e.target.value=nf(state.fire.monthlyInvestment);renderAll();saveData()};$("returnInput").oninput=e=>{state.fire.annualReturn=raw(e.target.value);renderAll();saveData()};$("displayNameInput").oninput=e=>{state.settings.displayName=e.target.value;renderUser();saveData()};$("emergencyMonthsInput").oninput=e=>{state.settings.emergencyMonths=raw(e.target.value);renderAI();saveData()};$("resetDemoBtn").onclick=async()=>{if(confirm("確定重置成示範資料？目前資料會被覆蓋。")){state=clone(defaultData);state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};await saveAndRender()}}}
 setDailyQuote();bind();setupPWA();applyMobileLineSafety();
-onAuthStateChanged(auth,async currentUser=>{if(isLiffMode())return;user=currentUser;if(currentUser){authMode="firebase";$("loginView").classList.add("hidden");$("appView").classList.remove("hidden");await loadData()}else{$("loginView").classList.remove("hidden");$("appView").classList.add("hidden")}});
+onAuthStateChanged(auth,async currentUser=>{if(isLocalMode())return;user=currentUser;if(currentUser){authMode="firebase";$("loginView").classList.add("hidden");$("appView").classList.remove("hidden");await loadData()}else{$("loginView").classList.remove("hidden");$("appView").classList.add("hidden")}});
