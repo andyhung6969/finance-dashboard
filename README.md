@@ -1,4 +1,4 @@
-# FIRE OS 2.6.6 - Asset Allocation Redesign
+# FIRE OS 2.6.7 - Asset Allocation Redesign
 
 這版只改「資產配置」卡片：
 
@@ -9,3 +9,11 @@
 - 保留 2.6.5 登入頁置中與 Crafted by 洪彥安
 
 未改動 Firebase / Firestore / 登入邏輯。
+
+
+## FIRE OS 2.6.7 - Login Logo Polish
+
+- LINE login button now includes a LINE-style logo.
+- Google login button now includes a Google-style logo.
+- Desktop and mobile login screens are both updated.
+- Login logic is unchanged.
