@@ -1,4 +1,4 @@
-# FIRE OS 3.0.3 — Guest Reset Fix
+# FIRE OS 3.0.4 — Guest Reset Fix
 
 修正內容：
 
@@ -9,3 +9,12 @@
 - Google / LINE 登入與 Firestore 邏輯不變。
 
 部署方式：把 ZIP 解壓縮後，將內容覆蓋到 GitHub Pages repository 根目錄。
+
+
+## 3.0.4 Onboarding Polish
+
+- 新增四步驟進度顯示
+- 金額輸入即時千分位
+- 下一步按鈕狀態
+- 建立 FIRE OS 動畫
+- 完成歡迎畫面
