@@ -12,14 +12,3 @@
 
 .mobile-line-notice{margin-top:10px;color:#ffd166}.disabled-line{opacity:.6;filter:saturate(.65)}
 @media (min-width: 769px){.mobile-line-notice{display:none!important}}
-
-/* 2.6.3 Profile photo on homepage */
-.home-profile-pill{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.09);border:1px solid var(--border);max-width:240px}
-.home-profile-pill img{width:34px;height:34px;border-radius:999px;object-fit:cover;background:linear-gradient(135deg,var(--green),var(--blue))}
-.home-profile-pill strong{display:block;font-size:13px;line-height:1.1;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.home-profile-pill span{display:block;color:var(--muted);font-size:11px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.profile-home-card{display:flex;align-items:center;gap:14px;border-radius:26px;padding:16px 18px;margin-bottom:16px}
-.profile-home-card img{width:56px;height:56px;border-radius:20px;object-fit:cover;background:linear-gradient(135deg,var(--green),var(--blue))}
-.profile-home-card h3{margin:0;font-size:22px}.profile-home-card span{display:block;color:var(--muted);font-size:13px;margin-top:4px}.avatar-fallback{background:linear-gradient(135deg,var(--green),var(--blue))!important}
-@media(max-width:960px){.home-profile-pill{padding:6px;border-radius:18px}.home-profile-pill div{display:none}.home-profile-pill img{width:38px;height:38px}.profile-home-card{display:flex}}
-@media(min-width:961px){.profile-home-card{display:none}}

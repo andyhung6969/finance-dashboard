@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FIRE OS 2.6.3</title>
+  <title>FIRE OS 2.6.2</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="assets/css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,8 +14,8 @@
   <section id="loginView" class="login-shell">
     <div class="login-card glass">
       <div class="logo-mark">🔥</div>
-      <h1>FIRE OS 2.6.3</h1>
-      <p>LIFF Demo Login + 首頁語錄 + 頭貼</p>
+      <h1>FIRE OS 2.6.2</h1>
+      <p>LIFF Demo Login + 首頁語錄</p>
       <button id="lineLoginBtn" class="line-btn">使用 LINE 登入</button>
       <p id="mobileLineNotice" class="tiny mobile-line-notice hidden">手機版會使用 LIFF Demo Login，不需 Cloud Functions；資料會先保存在此裝置。</p>
       <div class="login-divider"><span></span><small>OR</small><span></span></div>
@@ -26,7 +26,7 @@
 
   <main id="appView" class="app hidden">
     <aside class="sidebar glass desktop-only">
-      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.6.3</small></div>
+      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.6.2</small></div>
       <nav class="desktop-nav">
         <button class="nav active" data-page="dashboard">🏠 首頁</button>
         <button class="nav" data-page="assets">💰 Assets</button>
@@ -48,10 +48,6 @@
       <header class="topbar glass mobile-topbar">
         <div><p id="greeting" class="eyebrow">財務的累積，需要時間。</p><h1 id="pageTitle">首頁</h1></div>
         <div class="top-actions">
-          <div class="home-profile-pill" id="homeProfilePill">
-            <img id="homeProfilePhoto" alt="profile" />
-            <div><strong id="homeProfileName">User</strong><span id="homeProfileProvider">FIRE OS</span></div>
-          </div>
           <button id="installBtn" class="ghost-btn small hidden">安裝 App</button>
           <button id="mobileLogoutBtn" class="ghost-btn small mobile-only" type="button">登出</button>
           <button id="saveBtn" class="primary-btn small">同步</button>
@@ -62,14 +58,6 @@
         <div class="hero glass">
           <div><p class="eyebrow">Net Worth</p><h2 id="netWorthHero">NT$0</h2><p id="heroDelta" class="positive">Firestore synced</p></div>
           <div class="ring"><span id="fireRing">0%</span></div>
-        </div>
-        <div class="profile-home-card glass" id="profileHomeCard">
-          <img id="homeCardPhoto" alt="profile" />
-          <div>
-            <p class="eyebrow">Profile</p>
-            <h3 id="homeCardName">User</h3>
-            <span id="homeCardProvider">Google / LINE</span>
-          </div>
         </div>
         <div class="kpi-grid">
           <div class="card glass"><p>Total Assets</p><h3 id="kpiAssets">NT$0</h3></div>
