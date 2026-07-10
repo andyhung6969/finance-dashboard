@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FIRE OS 3.0.5</title>
+  <title>FIRE OS 3.0.3</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="assets/css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -16,11 +16,11 @@
       <div class="logo-mark">🔥</div>
       <h1>FIRE OS</h1>
       <div class="login-actions">
-        <button id="lineLoginBtn" class="line-btn" type="button">使用 LINE 登入</button>
-        <button id="googleLoginBtn" class="primary-btn secondary-login" type="button">使用 Google 登入</button>
+        <button id="lineLoginBtn" class="line-btn">使用 LINE 登入</button>
+        <button id="googleLoginBtn" class="primary-btn secondary-login">使用 Google 登入</button>
       </div>
       <div class="login-footer">
-        <div class="login-version">v3.0.5</div>
+        <div class="login-version">v3.0.3</div>
         <div class="login-crafted">Crafted by 洪彥安</div>
         <button id="guestExperienceBtn" class="guest-link" type="button">先體驗 FIRE OS →</button>
       </div>
@@ -29,7 +29,7 @@
 
   <main id="appView" class="app hidden">
     <aside class="sidebar glass desktop-only">
-      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>3.0.5</small></div>
+      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>3.0.3</small></div>
       <nav class="desktop-nav">
         <button class="nav active" data-page="dashboard">🏠 首頁</button>
         <button class="nav" data-page="assets">💰 Assets</button>
@@ -160,7 +160,6 @@
   <section id="onboardingView" class="onboarding-shell hidden" aria-live="polite">
     <div class="onboarding-card glass">
       <div class="onboarding-progress"><i id="onboardingProgress"></i></div>
-      <div class="onboarding-step-meta"><div id="onboardingDots" class="onboarding-dots"></div><span id="onboardingCount">1 / 4</span></div>
       <div id="onboardingContent"></div>
       <div class="onboarding-actions">
         <button id="onboardingBackBtn" class="ghost-btn" type="button">返回</button>

@@ -71,13 +71,13 @@ const fieldConfigs = {
   journal:[["date","日期","date"],["title","標題","text"],["amount","金額","money"],["note","備註","textarea"]]
 };
 const defaultData = {
-  version:"3.0.5", onboardingCompleted:false, settings:{displayName:"", emergencyMonths:6, retirementAge:50}, fire:{goal:30000000, monthlyInvestment:60000, annualReturn:8},
+  version:"3.0.3", onboardingCompleted:false, settings:{displayName:"", emergencyMonths:6, retirementAge:50}, fire:{goal:30000000, monthlyInvestment:60000, annualReturn:8},
   assets:[{id:uid(),name:"現金 / 存款",type:"現金",amount:800000},{id:uid(),name:"房地產",type:"房產",amount:3000000},{id:uid(),name:"其他資產",type:"其他",amount:200000}],
   liabilities:[{id:uid(),name:"房貸",amount:2300000},{id:uid(),name:"信用卡",amount:0}],
   investments:[{id:uid(),symbol:"0050",name:"元大台灣50",cost:2300000,value:2850000,dividend:68000},{id:uid(),symbol:"VOO",name:"Vanguard S&P 500",cost:1200000,value:1560000,dividend:32000}],
   income:[{id:uid(),name:"薪水",amount:95000},{id:uid(),name:"租金",amount:18000},{id:uid(),name:"股息 / 利息",amount:12000}],
   expenses:[{id:uid(),name:"生活費",amount:30000},{id:uid(),name:"房貸",amount:25800},{id:uid(),name:"保險",amount:5000}],
-  journal:[{id:uid(),date:today(),title:"建立 FIRE OS 3.0.4",amount:0,note:"First Time Experience：建立 FIRE 初始資料。"}],
+  journal:[{id:uid(),date:today(),title:"建立 FIRE OS 3.0.3",amount:0,note:"First Time Experience：建立 FIRE 初始資料。"}],
   history:[{id:uid(),month:"2025-04",netWorth:5900000},{id:uid(),month:"2025-05",netWorth:6150000},{id:uid(),month:"2025-06",netWorth:6420000},{id:uid(),month:"2025-07",netWorth:6810000},{id:uid(),month:"2025-08",netWorth:7200000}]
 };
 function isLiffMode(){return authMode === "liff"}
@@ -86,7 +86,7 @@ function isLocalMode(){return authMode === "liff" || authMode === "guest"}
 function liffStorageKey(){return `fireos_liff_demo_${user?.uid || "guest"}`}
 function localStorageKey(){return `fireos_local_${user?.uid || "guest"}`}
 function userRef(){return doc(db,"users",user.uid)}
-function normalizeState(data){const base=clone(defaultData);const merged={...base,...(data||{})};["assets","liabilities","investments","income","expenses","journal","history"].forEach(k=>{if(!Array.isArray(merged[k]))merged[k]=[];merged[k]=merged[k].map(item=>({id:item.id||uid(),...item}))});merged.settings={...base.settings,...(merged.settings||{})};merged.fire={...base.fire,...(merged.fire||{})};merged.version="3.0.5";return merged}
+function normalizeState(data){const base=clone(defaultData);const merged={...base,...(data||{})};["assets","liabilities","investments","income","expenses","journal","history"].forEach(k=>{if(!Array.isArray(merged[k]))merged[k]=[];merged[k]=merged[k].map(item=>({id:item.id||uid(),...item}))});merged.settings={...base.settings,...(merged.settings||{})};merged.fire={...base.fire,...(merged.fire||{})};merged.version="3.0.3";return merged}
 async function loadData(){
   let isNewUser = false;
   if (isLocalMode()) {
@@ -281,96 +281,41 @@ function hideOnboarding(){
   if (view) view.classList.add("hidden");
 }
 function onboardingInputValue(id){ return raw($(id)?.value); }
-function onboardingInputValue(id){ return raw($(id)?.value); }
-function setOnboardingActions({nextText="下一步", showBack=true, nextDisabled=false, hideNext=false}={}){
-  const backBtn = $("onboardingBackBtn");
-  const nextBtn = $("onboardingNextBtn");
-  if (!backBtn || !nextBtn) return;
-  backBtn.classList.toggle("hidden", !showBack);
-  nextBtn.classList.toggle("hidden", hideNext);
-  nextBtn.textContent = nextText;
-  nextBtn.disabled = nextDisabled;
-  nextBtn.classList.toggle("is-disabled", nextDisabled);
-}
-function updateOnboardingProgress(){
-  const progress = $("onboardingProgress");
-  const dots = $("onboardingDots");
-  const count = $("onboardingCount");
-  const total = 4;
-  const current = Math.min(onboardingStep + 1, total);
-  if (progress) progress.style.width = (current / total * 100) + "%";
-  if (dots) dots.innerHTML = Array.from({length: total}, (_, i) => `<span class="${i < current ? "active" : ""}"></span>`).join("");
-  if (count) count.textContent = `${current} / ${total}`;
-}
-function updateOnboardingNextState(){
-  let disabled = false;
-  if (onboardingStep === 1) disabled = onboardingInputValue("onboardGoal") <= 0;
-  if (onboardingStep === 2) disabled = $("onboardAssets") && $("onboardAssets").value.trim() === "";
-  setOnboardingActions({
-    nextText: onboardingStep === 3 ? "建立 FIRE OS" : "下一步",
-    showBack: onboardingStep !== 0,
-    nextDisabled: disabled
-  });
-}
-function bindMoneyInput(id, draftKey){
-  const el = $(id);
-  if (!el) return;
-  el.addEventListener("input", () => {
-    const value = raw(el.value);
-    onboardingDraft[draftKey] = value;
-    el.value = value ? nf(value) : "";
-    updateOnboardingNextState();
-  });
-}
 function renderOnboardingStep(){
   const content = $("onboardingContent");
-  if (!content) return;
-  updateOnboardingProgress();
+  const progress = $("onboardingProgress");
+  const backBtn = $("onboardingBackBtn");
+  const nextBtn = $("onboardingNextBtn");
+  if (!content || !progress || !backBtn || !nextBtn) return;
+  const pct = ((onboardingStep + 1) / 5) * 100;
+  progress.style.width = pct + "%";
+  backBtn.classList.toggle("hidden", onboardingStep === 0);
+  nextBtn.textContent = onboardingStep === 4 ? "建立 FIRE OS" : "下一步";
   const screens = [
-    `<div class="onboarding-hero"><div class="onboarding-flame">🔥</div><span class="onboarding-kicker">FIRE</span><h2>財務自由，從今天開始</h2><p>FIRE 是 Financial Independence, Retire Early。</p><p>真正的目標不是退休，而是提早擁有選擇人生的自由。</p></div>`,
+    `<div class="onboarding-hero"><div class="onboarding-flame">🔥</div><h2>歡迎來到 FIRE OS</h2><p>打造屬於你的 Personal Wealth OS。</p><p class="onboarding-muted">第一次使用，只需要 30 秒建立初始資料。</p></div>`,
+    `<div class="onboarding-hero"><span class="onboarding-kicker">FIRE</span><h2>Financial Independence,<br>Retire Early</h2><p>真正的目標不是退休，而是提早擁有選擇人生的自由。</p></div>`,
     `<div class="onboarding-form"><h2>你的 FIRE 目標是多少？</h2><label>FIRE 目標金額</label><div class="onboarding-money"><span>NT$</span><input id="onboardGoal" inputmode="numeric" value="${nf(onboardingDraft.goal)}"></div><p class="onboarding-muted">不知道也沒關係，之後都可以修改。</p></div>`,
     `<div class="onboarding-form"><h2>目前財務現況</h2><label>目前總資產</label><div class="onboarding-money"><span>NT$</span><input id="onboardAssets" inputmode="numeric" value="${onboardingDraft.assets ? nf(onboardingDraft.assets) : ""}" placeholder="7,200,000"></div><label>目前總負債</label><div class="onboarding-money"><span>NT$</span><input id="onboardDebt" inputmode="numeric" value="${onboardingDraft.debt ? nf(onboardingDraft.debt) : ""}" placeholder="2,300,000"></div></div>`,
     `<div class="onboarding-form"><h2>希望幾歲擁有財務自由？</h2><div class="age-display"><strong id="onboardAgeText">${onboardingDraft.age}</strong><span>歲</span></div><input id="onboardAge" class="age-slider" type="range" min="30" max="65" value="${onboardingDraft.age}"><p class="onboarding-muted">這不是限制，而是給未來的自己一個方向。</p></div>`
   ];
   content.innerHTML = screens[onboardingStep];
-  bindMoneyInput("onboardGoal", "goal");
-  bindMoneyInput("onboardAssets", "assets");
-  bindMoneyInput("onboardDebt", "debt");
+  ["onboardGoal","onboardAssets","onboardDebt"].forEach(id => {
+    const el = $(id);
+    if (el) el.addEventListener("input", () => { el.value = nf(raw(el.value)); });
+  });
   const age = $("onboardAge");
   if (age) age.addEventListener("input", () => { onboardingDraft.age = raw(age.value); $("onboardAgeText").textContent = onboardingDraft.age; });
-  updateOnboardingNextState();
 }
 function captureOnboardingStep(){
-  if (onboardingStep === 1) onboardingDraft.goal = onboardingInputValue("onboardGoal") || 30000000;
-  if (onboardingStep === 2) {
+  if (onboardingStep === 2) onboardingDraft.goal = onboardingInputValue("onboardGoal") || 30000000;
+  if (onboardingStep === 3) {
     onboardingDraft.assets = onboardingInputValue("onboardAssets");
     onboardingDraft.debt = onboardingInputValue("onboardDebt");
   }
-  if (onboardingStep === 3) onboardingDraft.age = onboardingInputValue("onboardAge") || 50;
-}
-function showOnboardingLoading(){
-  const content = $("onboardingContent");
-  const progress = $("onboardingProgress");
-  const dots = $("onboardingDots");
-  const count = $("onboardingCount");
-  if (progress) progress.style.width = "100%";
-  if (dots) dots.innerHTML = `<span class="active"></span><span class="active"></span><span class="active"></span><span class="active"></span>`;
-  if (count) count.textContent = "建立中";
-  setOnboardingActions({showBack:false, hideNext:true});
-  if (content) content.innerHTML = `<div class="onboarding-hero"><div class="onboarding-flame">🔥</div><h2>正在建立你的 FIRE OS...</h2><div class="onboarding-loader"><i></i></div><p class="onboarding-muted">正在整理你的初始資料。</p></div>`;
-}
-function showOnboardingWelcome(){
-  const content = $("onboardingContent");
-  const progress = $("onboardingProgress");
-  const count = $("onboardingCount");
-  if (progress) progress.style.width = "100%";
-  if (count) count.textContent = "完成";
-  setOnboardingActions({showBack:false, nextText:"進入首頁", nextDisabled:false});
-  if (content) content.innerHTML = `<div class="onboarding-hero"><div class="onboarding-flame">🎉</div><h2>歡迎加入 FIRE OS</h2><p>你的 FIRE 旅程，從今天開始。</p><div class="onboarding-result"><span>目前淨資產</span><strong>${fmt((raw(onboardingDraft.assets) || 0) - (raw(onboardingDraft.debt) || 0))}</strong></div></div>`;
+  if (onboardingStep === 4) onboardingDraft.age = onboardingInputValue("onboardAge") || 50;
 }
 async function completeOnboarding(){
   captureOnboardingStep();
-  showOnboardingLoading();
   const assets = raw(onboardingDraft.assets);
   const debt = raw(onboardingDraft.debt);
   const netWorth = assets - debt;
@@ -382,15 +327,13 @@ async function completeOnboarding(){
   state.journal = [{id:uid(), date:today(), title:"FIRE Day 1", amount:netWorth, note:"你的 FIRE 旅程從今天開始。"}];
   state.onboardingCompleted = true;
   state.onboarding = {createdAt:new Date().toISOString(), retirementAge:state.settings.retirementAge};
-  await new Promise(resolve => setTimeout(resolve, 850));
   await saveAndRender();
-  showOnboardingWelcome();
+  hideOnboarding();
+  switchPage("dashboard");
 }
 function nextOnboarding(){
-  if ($("onboardingCount")?.textContent === "完成") { hideOnboarding(); switchPage("dashboard"); return; }
-  if ($("onboardingNextBtn")?.disabled) return;
   captureOnboardingStep();
-  if (onboardingStep < 3) { onboardingStep++; renderOnboardingStep(); return; }
+  if (onboardingStep < 4) { onboardingStep++; renderOnboardingStep(); return; }
   completeOnboarding();
 }
 function prevOnboarding(){
@@ -467,48 +410,6 @@ async function logout(){
   await signOut(auth);
 }
 function switchPage(page){document.querySelectorAll(".nav,.mobile-nav-item").forEach(x=>x.classList.toggle("active",x.dataset.page===page));document.querySelectorAll(".page").forEach(x=>x.classList.remove("active-page"));$(page).classList.add("active-page");$("pageTitle").textContent=pageTitles[page]||page;renderCharts();document.querySelector(".content")?.scrollTo?.({top:0,behavior:"smooth"});window.scrollTo({top:0,behavior:"smooth"})}
-function doLineLogin(){ return isMobileLike() ? handleLiffLogin() : signInWithPopup(auth,lineProvider); }
-function doGoogleLogin(){ return signInWithPopup(auth,provider); }
-function on(id, event, handler){ const el=$(id); if(el) el.addEventListener(event, handler); }
-function bind(){
-  document.querySelectorAll(".nav,.mobile-nav-item").forEach(button=>{button.onclick=()=>switchPage(button.dataset.page)});
-  on("lineLoginBtn","click",(e)=>{e.preventDefault(); doLineLogin();});
-  on("googleLoginBtn","click",(e)=>{e.preventDefault(); doGoogleLogin();});
-  on("guestExperienceBtn","click",(e)=>{e.preventDefault(); startGuestExperience();});
-  on("onboardingNextBtn","click",(e)=>{e.preventDefault(); nextOnboarding();});
-  on("onboardingBackBtn","click",(e)=>{e.preventDefault(); prevOnboarding();});
-  on("linkLineBtn","click",()=>{ if(isMobileLike()) return alert("手機版目前使用 LINE 登入，帳號連結請先在桌機版操作。"); return linkProvider(lineProvider,"LINE"); });
-  on("linkGoogleBtn","click",()=>linkProvider(provider,"Google"));
-  on("logoutBtn","click",()=>logout());
-  on("mobileLogoutBtn","click",()=>logout());
-  on("saveBtn","click",async()=>{await saveData();alert("已同步到 Firestore")});
-  on("addAssetBtn","click",()=>add("asset"));
-  on("addLiabilityBtn","click",()=>add("liability"));
-  on("addInvestmentBtn","click",()=>add("investment"));
-  on("addIncomeBtn","click",()=>add("income"));
-  on("addExpenseBtn","click",()=>add("expense"));
-  on("addJournalBtn","click",()=>add("journal"));
-  on("snapshotBtn","click",recordMonthlySnapshot);
-  on("exportBtn","click",exportData);
-  on("importBtn","click",()=>$("importFile")?.click());
-  const importFile=$("importFile"); if(importFile) importFile.onchange=importData;
-  const editForm=$("editForm"); if(editForm) editForm.onsubmit=submitEdit;
-  on("deleteDialogBtn","click",deleteEditingItem);
-  const fireGoalInput=$("fireGoalInput"); if(fireGoalInput) fireGoalInput.oninput=e=>{state.fire.goal=raw(e.target.value);e.target.value=nf(state.fire.goal);renderAll();saveData()};
-  const monthlyInvestInput=$("monthlyInvestInput"); if(monthlyInvestInput) monthlyInvestInput.oninput=e=>{state.fire.monthlyInvestment=raw(e.target.value);e.target.value=nf(state.fire.monthlyInvestment);renderAll();saveData()};
-  const returnInput=$("returnInput"); if(returnInput) returnInput.oninput=e=>{state.fire.annualReturn=raw(e.target.value);renderAll();saveData()};
-  const displayNameInput=$("displayNameInput"); if(displayNameInput) displayNameInput.oninput=e=>{state.settings.displayName=e.target.value;renderUser();saveData()};
-  const emergencyMonthsInput=$("emergencyMonthsInput"); if(emergencyMonthsInput) emergencyMonthsInput.oninput=e=>{state.settings.emergencyMonths=raw(e.target.value);renderAI();saveData()};
-  on("resetDemoBtn","click",async()=>{if(confirm("確定重置成示範資料？目前資料會被覆蓋。")){state=clone(defaultData);state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};await saveAndRender()}});
-  // Mobile Safari / PWA fallback: delegated click catches taps even if a button was re-rendered or old onclick binding failed.
-  document.addEventListener("click", event => {
-    const target = event.target.closest?.("#lineLoginBtn,#googleLoginBtn,#guestExperienceBtn");
-    if(!target) return;
-    event.preventDefault();
-    if(target.id === "lineLoginBtn") return doLineLogin();
-    if(target.id === "googleLoginBtn") return doGoogleLogin();
-    if(target.id === "guestExperienceBtn") return startGuestExperience();
-  }, true);
-}
+function bind(){document.querySelectorAll(".nav,.mobile-nav-item").forEach(button=>{button.onclick=()=>switchPage(button.dataset.page)});$("lineLoginBtn").onclick=()=>{ if(isMobileLike()) return handleLiffLogin(); return signInWithPopup(auth,lineProvider); };$("googleLoginBtn").onclick=()=>signInWithPopup(auth,provider);if($("guestExperienceBtn"))$("guestExperienceBtn").onclick=()=>startGuestExperience();if($("onboardingNextBtn"))$("onboardingNextBtn").onclick=()=>nextOnboarding();if($("onboardingBackBtn"))$("onboardingBackBtn").onclick=()=>prevOnboarding();$("linkLineBtn").onclick=()=>{ if(isMobileLike()) return alert("手機版目前使用 LINE 登入，帳號連結請先在桌機版操作。"); return linkProvider(lineProvider,"LINE"); };$("linkGoogleBtn").onclick=()=>linkProvider(provider,"Google");$("logoutBtn").onclick=()=>logout();if($("mobileLogoutBtn"))$("mobileLogoutBtn").onclick=()=>logout();$("saveBtn").onclick=async()=>{await saveData();alert("已同步到 Firestore")};$("addAssetBtn").onclick=()=>add("asset");$("addLiabilityBtn").onclick=()=>add("liability");$("addInvestmentBtn").onclick=()=>add("investment");$("addIncomeBtn").onclick=()=>add("income");$("addExpenseBtn").onclick=()=>add("expense");$("addJournalBtn").onclick=()=>add("journal");$("snapshotBtn").onclick=recordMonthlySnapshot;$("exportBtn").onclick=exportData;$("importBtn").onclick=()=>$("importFile").click();$("importFile").onchange=importData;$("editForm").onsubmit=submitEdit;$("deleteDialogBtn").onclick=deleteEditingItem;$("fireGoalInput").oninput=e=>{state.fire.goal=raw(e.target.value);e.target.value=nf(state.fire.goal);renderAll();saveData()};$("monthlyInvestInput").oninput=e=>{state.fire.monthlyInvestment=raw(e.target.value);e.target.value=nf(state.fire.monthlyInvestment);renderAll();saveData()};$("returnInput").oninput=e=>{state.fire.annualReturn=raw(e.target.value);renderAll();saveData()};$("displayNameInput").oninput=e=>{state.settings.displayName=e.target.value;renderUser();saveData()};$("emergencyMonthsInput").oninput=e=>{state.settings.emergencyMonths=raw(e.target.value);renderAI();saveData()};$("resetDemoBtn").onclick=async()=>{if(confirm("確定重置成示範資料？目前資料會被覆蓋。")){state=clone(defaultData);state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};await saveAndRender()}}}
 setDailyQuote();bind();setupPWA();applyMobileLineSafety();
 onAuthStateChanged(auth,async currentUser=>{if(isLocalMode())return;user=currentUser;if(currentUser){authMode="firebase";$("loginView").classList.add("hidden");$("appView").classList.remove("hidden");await loadData()}else{$("loginView").classList.remove("hidden");$("appView").classList.add("hidden")}});
