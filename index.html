@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FIRE OS 2.6.2</title>
+  <title>FIRE OS 2.6.4</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="assets/css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,19 +14,22 @@
   <section id="loginView" class="login-shell">
     <div class="login-card glass">
       <div class="logo-mark">🔥</div>
-      <h1>FIRE OS 2.6.2</h1>
-      <p>LIFF Demo Login + 首頁語錄</p>
-      <button id="lineLoginBtn" class="line-btn">使用 LINE 登入</button>
-      <p id="mobileLineNotice" class="tiny mobile-line-notice hidden">手機版會使用 LIFF Demo Login，不需 Cloud Functions；資料會先保存在此裝置。</p>
-      <div class="login-divider"><span></span><small>OR</small><span></span></div>
-      <button id="googleLoginBtn" class="primary-btn secondary-login">使用 Google 登入</button>
-      <p class="tiny">手機 LINE App 內使用 LIFF Demo Login；桌機保留 Firebase LINE / Google Login。</p>
+      <h1>FIRE OS</h1>
+      <div class="login-actions">
+        <button id="lineLoginBtn" class="line-btn">使用 LINE 登入</button>
+        <button id="googleLoginBtn" class="primary-btn secondary-login">使用 Google 登入</button>
+      </div>
+      <p id="mobileLineNotice" class="tiny mobile-line-notice hidden">手機版會使用 LIFF Demo Login。</p>
+      <div class="login-footer">
+        <div class="login-version">v2.6.4</div>
+        <div class="login-crafted">Crafted by 洪彥安</div>
+      </div>
     </div>
   </section>
 
   <main id="appView" class="app hidden">
     <aside class="sidebar glass desktop-only">
-      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.6.2</small></div>
+      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.6.4</small></div>
       <nav class="desktop-nav">
         <button class="nav active" data-page="dashboard">🏠 首頁</button>
         <button class="nav" data-page="assets">💰 Assets</button>
@@ -65,9 +68,9 @@
           <div class="card glass"><p>Monthly Cashflow</p><h3 id="kpiCashflow">NT$0</h3></div>
           <div class="card glass"><p>Passive Coverage</p><h3 id="kpiPassive">0%</h3></div>
         </div>
-        <div class="two-col">
-          <div class="card glass"><h3>資產配置</h3><canvas id="assetChart"></canvas></div>
-          <div class="card glass"><h3>淨資產趨勢</h3><canvas id="netWorthChart"></canvas></div>
+        <div class="two-col dashboard-charts">
+          <div class="card glass asset-chart-card"><h3>資產配置</h3><canvas id="assetChart"></canvas></div>
+          <div class="card glass networth-chart-card"><h3>淨資產趨勢</h3><canvas id="netWorthChart"></canvas></div>
         </div>
       </section>
 
