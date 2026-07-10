@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FIRE OS 2.6.1</title>
+  <title>FIRE OS 2.5.2 Stable</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="assets/css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,21 +14,21 @@
   <section id="loginView" class="login-shell">
     <div class="login-card glass">
       <div class="logo-mark">🔥</div>
-      <h1>FIRE OS 2.6.1</h1>
-      <p>LIFF Demo Login</p>
+      <h1>FIRE OS 2.5.2 Stable</h1>
+      <p>Stable Edition</p>
       <button id="lineLoginBtn" class="line-btn">使用 LINE 登入</button>
-      <p id="mobileLineNotice" class="tiny mobile-line-notice hidden">手機版會使用 LIFF Demo Login，不需 Cloud Functions；資料會先保存在此裝置。</p>
+      <p id="mobileLineNotice" class="tiny mobile-line-notice hidden">手機版 LINE 登入開發中，請先使用 Google 登入。</p>
       <div class="login-divider"><span></span><small>OR</small><span></span></div>
       <button id="googleLoginBtn" class="primary-btn secondary-login">使用 Google 登入</button>
-      <p class="tiny">手機 LINE App 內使用 LIFF Demo Login；桌機保留 Firebase LINE / Google Login。</p>
+      <p class="tiny">LINE Login + Google Login + Account Linking，登入後資料同步到 Firebase Firestore。</p>
     </div>
   </section>
 
   <main id="appView" class="app hidden">
     <aside class="sidebar glass desktop-only">
-      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.6.1</small></div>
+      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.5.2</small></div>
       <nav class="desktop-nav">
-        <button class="nav active" data-page="dashboard">🏠 Dashboard</button>
+        <button class="nav active" data-page="dashboard">🏠 首頁</button>
         <button class="nav" data-page="assets">💰 Assets</button>
         <button class="nav" data-page="investments">📈 投資</button>
         <button class="nav" data-page="cashflow">💵 現金流</button>
@@ -46,12 +46,8 @@
 
     <section class="content">
       <header class="topbar glass mobile-topbar">
-        <div><p id="greeting" class="eyebrow">Good Evening</p><h1 id="pageTitle">Dashboard</h1></div>
+        <div><p id="greeting" class="eyebrow">財務的累積，需要時間。</p><h1 id="pageTitle">首頁</h1></div>
         <div class="top-actions">
-          <div class="mobile-user-chip mobile-only">
-            <img id="mobileUserPhoto" alt="user" />
-            <span id="mobileUserName">User</span>
-          </div>
           <button id="installBtn" class="ghost-btn small hidden">安裝 App</button>
           <button id="mobileLogoutBtn" class="ghost-btn small mobile-only" type="button">登出</button>
           <button id="saveBtn" class="primary-btn small">同步</button>
@@ -59,14 +55,6 @@
       </header>
 
       <section id="dashboard" class="page active-page">
-        <div id="lineProfileCard" class="line-profile-card glass hidden">
-          <img id="lineProfilePhoto" alt="LINE profile" />
-          <div>
-            <p class="eyebrow">LINE Profile</p>
-            <strong id="lineProfileName">LINE User</strong>
-            <span id="lineProfileProvider">LIFF Demo Login</span>
-          </div>
-        </div>
         <div class="hero glass">
           <div><p class="eyebrow">Net Worth</p><h2 id="netWorthHero">NT$0</h2><p id="heroDelta" class="positive">Firestore synced</p></div>
           <div class="ring"><span id="fireRing">0%</span></div>
@@ -145,7 +133,7 @@
     </section>
 
     <nav class="mobile-floating-nav mobile-only" aria-label="Mobile Navigation">
-      <button class="mobile-nav-item active" data-page="dashboard"><span>🏠</span><small>Dashboard</small></button>
+      <button class="mobile-nav-item active" data-page="dashboard"><span>🏠</span><small>首頁</small></button>
       <button class="mobile-nav-item" data-page="assets"><span>💰</span><small>Assets</small></button>
       <button class="mobile-nav-item" data-page="investments"><span>📈</span><small>投資</small></button>
       <button class="mobile-nav-item" data-page="cashflow"><span>💵</span><small>現金流</small></button>
@@ -164,7 +152,6 @@
     </form>
   </dialog>
 
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script type="module" src="assets/js/app.js"></script>
 </body>
 </html>

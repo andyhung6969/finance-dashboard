@@ -1,14 +1,27 @@
-# FIRE OS 2.6.1 — LIFF Profile Visible Patch
+# FIRE OS 2.5.2 Stable
 
-這版只修 LIFF Demo Login 後的 LINE 頭貼與名稱顯示。
+Official stable release.
 
-## 更新
+## Changed
 
-- 手機 Header 顯示 LINE / Google 頭貼與名稱
-- Dashboard 顯示 LINE Profile 卡片
-- LIFF 登入後自動把 LINE displayName 套到畫面
-- 桌機與 Firebase 其他功能不動
+- Dashboard 改名為「首頁」
+- 首頁上方文案改為 FIRE OS 品牌語錄
+- 新增每日輪播語錄
 
-## 注意
+## Kept stable
 
-LIFF profile 只有在 LINE App / LIFF 環境中能完整取得。若從 Safari / Chrome 直接開啟，會依照瀏覽器登入狀態顯示。
+- Google Login
+- Desktop LINE Login
+- Mobile LINE Login Safe Patch：手機版 LINE 登入暫停，提示使用 Google
+- Mobile Logout
+- Responsive UI
+- Firebase / Firestore Sync
+- PWA
+
+## Known issue
+
+- Mobile LINE Login Coming Soon（未來用 LIFF 解決）
+
+## Deploy
+
+把 ZIP 解壓縮後，將所有檔案覆蓋到 GitHub repository 根目錄。

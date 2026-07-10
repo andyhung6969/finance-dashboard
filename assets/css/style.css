@@ -12,13 +12,3 @@
 
 .mobile-line-notice{margin-top:10px;color:#ffd166}.disabled-line{opacity:.6;filter:saturate(.65)}
 @media (min-width: 769px){.mobile-line-notice{display:none!important}}
-
-/* 2.6.1 LIFF profile visible patch */
-.mobile-user-chip{display:none;align-items:center;gap:8px;padding:6px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14)}
-.mobile-user-chip img{width:28px;height:28px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,var(--green),var(--blue))}
-.mobile-user-chip span{font-size:12px;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
-.line-profile-card{display:flex;align-items:center;gap:13px;border-radius:24px;padding:14px 16px;margin-bottom:14px}
-.line-profile-card img{width:52px;height:52px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,var(--green),var(--blue))}
-.line-profile-card strong{display:block;font-size:18px}
-.line-profile-card span{display:block;color:var(--muted);font-size:13px;margin-top:2px}
-@media(max-width:960px){.mobile-user-chip{display:flex}.top-actions{align-items:center}.top-actions #saveBtn{display:none}}
