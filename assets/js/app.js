@@ -4,7 +4,7 @@ import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.
 
 const firebaseConfig = { apiKey:"AIzaSyB5jUo6VmTNTRtCfwWhkwwXLYv1dcTSSi4", authDomain:"fire-dashboard-86bb9.firebaseapp.com", projectId:"fire-dashboard-86bb9", storageBucket:"fire-dashboard-86bb9.firebasestorage.app", messagingSenderId:"153073679515", appId:"1:153073679515:web:f49de492d1e79109fd1a3e", measurementId:"G-T34VDEFP7J" };
 const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app); const provider = new GoogleAuthProvider(); const lineProvider = new OAuthProvider("oidc.oidc.line");
-let deferredInstallPrompt = null, user = null, state = null, charts = {}, editing = { kind:null, id:null }, authMode = "firebase";
+let deferredInstallPrompt = null, user = null, state = null, charts = {}, editing = { kind:null, id:null }, authMode = "firebase", onboardingStep = 0, onboardingDraft = { goal: 30000000, assets: 0, debt: 0, age: 50 };
 const assetCenterTextPlugin = {
   id: "assetCenterText",
   afterDraw(chart, args, options) {
@@ -71,38 +71,56 @@ const fieldConfigs = {
   journal:[["date","日期","date"],["title","標題","text"],["amount","金額","money"],["note","備註","textarea"]]
 };
 const defaultData = {
-  version:"2.6.6", settings:{displayName:"", emergencyMonths:6}, fire:{goal:30000000, monthlyInvestment:60000, annualReturn:8},
+  version:"3.0.1", onboardingCompleted:false, settings:{displayName:"", emergencyMonths:6, retirementAge:50}, fire:{goal:30000000, monthlyInvestment:60000, annualReturn:8},
   assets:[{id:uid(),name:"現金 / 存款",type:"現金",amount:800000},{id:uid(),name:"房地產",type:"房產",amount:3000000},{id:uid(),name:"其他資產",type:"其他",amount:200000}],
   liabilities:[{id:uid(),name:"房貸",amount:2300000},{id:uid(),name:"信用卡",amount:0}],
   investments:[{id:uid(),symbol:"0050",name:"元大台灣50",cost:2300000,value:2850000,dividend:68000},{id:uid(),symbol:"VOO",name:"Vanguard S&P 500",cost:1200000,value:1560000,dividend:32000}],
   income:[{id:uid(),name:"薪水",amount:95000},{id:uid(),name:"租金",amount:18000},{id:uid(),name:"股息 / 利息",amount:12000}],
   expenses:[{id:uid(),name:"生活費",amount:30000},{id:uid(),name:"房貸",amount:25800},{id:uid(),name:"保險",amount:5000}],
-  journal:[{id:uid(),date:today(),title:"建立 FIRE OS 2.6.6",amount:0,note:"LIFF Login + 首頁每日語錄。"}],
+  journal:[{id:uid(),date:today(),title:"建立 FIRE OS 3.0.1",amount:0,note:"First Time Experience：建立 FIRE 初始資料。"}],
   history:[{id:uid(),month:"2025-04",netWorth:5900000},{id:uid(),month:"2025-05",netWorth:6150000},{id:uid(),month:"2025-06",netWorth:6420000},{id:uid(),month:"2025-07",netWorth:6810000},{id:uid(),month:"2025-08",netWorth:7200000}]
 };
 function isLiffMode(){return authMode === "liff"}
+function isLocalMode(){return authMode === "liff" || authMode === "guest"}
 function liffStorageKey(){return `fireos_liff_demo_${user?.uid || "guest"}`}
+function localStorageKey(){return `fireos_local_${user?.uid || "guest"}`}
 function userRef(){return doc(db,"users",user.uid)}
-function normalizeState(data){const base=clone(defaultData);const merged={...base,...(data||{})};["assets","liabilities","investments","income","expenses","journal","history"].forEach(k=>{if(!Array.isArray(merged[k]))merged[k]=[];merged[k]=merged[k].map(item=>({id:item.id||uid(),...item}))});merged.settings={...base.settings,...(merged.settings||{})};merged.fire={...base.fire,...(merged.fire||{})};merged.version="2.6.6";return merged}
+function normalizeState(data){const base=clone(defaultData);const merged={...base,...(data||{})};["assets","liabilities","investments","income","expenses","journal","history"].forEach(k=>{if(!Array.isArray(merged[k]))merged[k]=[];merged[k]=merged[k].map(item=>({id:item.id||uid(),...item}))});merged.settings={...base.settings,...(merged.settings||{})};merged.fire={...base.fire,...(merged.fire||{})};merged.version="3.0.1";return merged}
 async function loadData(){
-  if (isLiffMode()) {
-    const cached = localStorage.getItem(liffStorageKey());
-    state = cached ? normalizeState(JSON.parse(cached)) : clone(defaultData);
-    state.profile = {uid:user.uid,email:user.email || "",name:user.displayName,photo:user.photoURL,provider:"line-liff-demo"};
-    await saveData();
+  let isNewUser = false;
+  if (isLocalMode()) {
+    const cached = localStorage.getItem(localStorageKey());
+    if (cached) {
+      state = normalizeState(JSON.parse(cached));
+    } else {
+      isNewUser = true;
+      state = clone(defaultData);
+    }
+    state.profile = {uid:user.uid,email:user.email || "",name:user.displayName,photo:user.photoURL,provider:isLiffMode()?"line-liff-demo":"guest-demo"};
     renderAll();
+    if (isNewUser || state.onboardingCompleted !== true) showOnboarding();
+    else await saveData();
     return;
   }
   const snap=await getDoc(userRef());
-  if(snap.exists())state=normalizeState(snap.data());
-  else{state=clone(defaultData);state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};await saveData()}
-  renderAll()
+  if(snap.exists()){
+    state=normalizeState(snap.data());
+    if (state.onboardingCompleted === undefined) state.onboardingCompleted = true;
+  }
+  else{
+    isNewUser = true;
+    state=clone(defaultData);
+    state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};
+  }
+  renderAll();
+  if (isNewUser || state.onboardingCompleted !== true) showOnboarding();
+  else await saveData();
 }
 async function saveData(){
   if(!user||!state)return;
   if (isLiffMode()) {
     state.updatedAt = new Date().toISOString();
-    localStorage.setItem(liffStorageKey(), JSON.stringify(state));
+    localStorage.setItem(localStorageKey(), JSON.stringify(state));
     return;
   }
   state.updatedAt=serverTimestamp();
@@ -247,6 +265,86 @@ function escapeHTML(value){return String(value??"").replaceAll("&","&amp;").repl
 async function recordMonthlySnapshot(){const t=totals(), key=monthKey();const existing=state.history.find(x=>x.month===key);if(existing)existing.netWorth=t.netWorth;else state.history.push({id:uid(),month:key,netWorth:t.netWorth});state.journal.unshift({id:uid(),date:today(),title:"月度淨資產快照",amount:t.netWorth,note:`已記錄 ${key} 淨資產。`});await saveAndRender();alert("已建立本月快照")}
 function exportData(){const payload=clone(state);payload.exportedAt=new Date().toISOString();const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});const link=document.createElement("a");link.href=URL.createObjectURL(blob);link.download=`fire-os-backup-${today()}.json`;link.click();URL.revokeObjectURL(link.href)}
 function importData(event){const file=event.target.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=async()=>{try{const imported=JSON.parse(reader.result);if(!confirm("匯入會覆蓋目前雲端資料，確定繼續？"))return;state=normalizeState(imported);state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};await saveAndRender();alert("匯入完成")}catch(error){alert("匯入失敗：JSON 格式不正確")}finally{event.target.value=""}};reader.readAsText(file)}
+
+function showOnboarding(){
+  onboardingStep = 0;
+  onboardingDraft = { goal: raw(state?.fire?.goal) || 30000000, assets: 0, debt: 0, age: state?.settings?.retirementAge || 50 };
+  const view = $("onboardingView");
+  if (view) view.classList.remove("hidden");
+  renderOnboardingStep();
+}
+function hideOnboarding(){
+  const view = $("onboardingView");
+  if (view) view.classList.add("hidden");
+}
+function onboardingInputValue(id){ return raw($(id)?.value); }
+function renderOnboardingStep(){
+  const content = $("onboardingContent");
+  const progress = $("onboardingProgress");
+  const backBtn = $("onboardingBackBtn");
+  const nextBtn = $("onboardingNextBtn");
+  if (!content || !progress || !backBtn || !nextBtn) return;
+  const pct = ((onboardingStep + 1) / 5) * 100;
+  progress.style.width = pct + "%";
+  backBtn.classList.toggle("hidden", onboardingStep === 0);
+  nextBtn.textContent = onboardingStep === 4 ? "建立 FIRE OS" : "下一步";
+  const screens = [
+    `<div class="onboarding-hero"><div class="onboarding-flame">🔥</div><h2>歡迎來到 FIRE OS</h2><p>打造屬於你的 Personal Wealth OS。</p><p class="onboarding-muted">第一次使用，只需要 30 秒建立初始資料。</p></div>`,
+    `<div class="onboarding-hero"><span class="onboarding-kicker">FIRE</span><h2>Financial Independence,<br>Retire Early</h2><p>真正的目標不是退休，而是提早擁有選擇人生的自由。</p></div>`,
+    `<div class="onboarding-form"><h2>你的 FIRE 目標是多少？</h2><label>FIRE 目標金額</label><div class="onboarding-money"><span>NT$</span><input id="onboardGoal" inputmode="numeric" value="${nf(onboardingDraft.goal)}"></div><p class="onboarding-muted">不知道也沒關係，之後都可以修改。</p></div>`,
+    `<div class="onboarding-form"><h2>目前財務現況</h2><label>目前總資產</label><div class="onboarding-money"><span>NT$</span><input id="onboardAssets" inputmode="numeric" value="${onboardingDraft.assets ? nf(onboardingDraft.assets) : ""}" placeholder="7,200,000"></div><label>目前總負債</label><div class="onboarding-money"><span>NT$</span><input id="onboardDebt" inputmode="numeric" value="${onboardingDraft.debt ? nf(onboardingDraft.debt) : ""}" placeholder="2,300,000"></div></div>`,
+    `<div class="onboarding-form"><h2>希望幾歲擁有財務自由？</h2><div class="age-display"><strong id="onboardAgeText">${onboardingDraft.age}</strong><span>歲</span></div><input id="onboardAge" class="age-slider" type="range" min="30" max="65" value="${onboardingDraft.age}"><p class="onboarding-muted">這不是限制，而是給未來的自己一個方向。</p></div>`
+  ];
+  content.innerHTML = screens[onboardingStep];
+  ["onboardGoal","onboardAssets","onboardDebt"].forEach(id => {
+    const el = $(id);
+    if (el) el.addEventListener("input", () => { el.value = nf(raw(el.value)); });
+  });
+  const age = $("onboardAge");
+  if (age) age.addEventListener("input", () => { onboardingDraft.age = raw(age.value); $("onboardAgeText").textContent = onboardingDraft.age; });
+}
+function captureOnboardingStep(){
+  if (onboardingStep === 2) onboardingDraft.goal = onboardingInputValue("onboardGoal") || 30000000;
+  if (onboardingStep === 3) {
+    onboardingDraft.assets = onboardingInputValue("onboardAssets");
+    onboardingDraft.debt = onboardingInputValue("onboardDebt");
+  }
+  if (onboardingStep === 4) onboardingDraft.age = onboardingInputValue("onboardAge") || 50;
+}
+async function completeOnboarding(){
+  captureOnboardingStep();
+  const assets = raw(onboardingDraft.assets);
+  const debt = raw(onboardingDraft.debt);
+  const netWorth = assets - debt;
+  state.fire.goal = raw(onboardingDraft.goal) || 30000000;
+  state.settings.retirementAge = raw(onboardingDraft.age) || 50;
+  state.assets = assets > 0 ? [{id:uid(), name:"目前總資產", type:"初始資產", amount:assets}] : [];
+  state.liabilities = debt > 0 ? [{id:uid(), name:"目前總負債", amount:debt}] : [];
+  state.history = [{id:uid(), month:monthKey(), netWorth:netWorth}];
+  state.journal = [{id:uid(), date:today(), title:"FIRE Day 1", amount:netWorth, note:"你的 FIRE 旅程從今天開始。"}];
+  state.onboardingCompleted = true;
+  state.onboarding = {createdAt:new Date().toISOString(), retirementAge:state.settings.retirementAge};
+  await saveAndRender();
+  hideOnboarding();
+  switchPage("dashboard");
+}
+function nextOnboarding(){
+  captureOnboardingStep();
+  if (onboardingStep < 4) { onboardingStep++; renderOnboardingStep(); return; }
+  completeOnboarding();
+}
+function prevOnboarding(){
+  captureOnboardingStep();
+  if (onboardingStep > 0) { onboardingStep--; renderOnboardingStep(); }
+}
+async function startGuestExperience(){
+  authMode = "guest";
+  user = { uid:"guest", displayName:"體驗模式", email:"", photoURL:"" };
+  $("loginView").classList.add("hidden");
+  $("appView").classList.remove("hidden");
+  await loadData();
+}
+
 function setupPWA(){if("serviceWorker" in navigator)navigator.serviceWorker.register("./service-worker.js").catch(console.warn);window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();deferredInstallPrompt=event;const btn=$("installBtn");if(btn)btn.classList.remove("hidden")});const installBtn=$("installBtn");if(installBtn)installBtn.onclick=async()=>{if(!deferredInstallPrompt)return;deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;installBtn.classList.add("hidden")}}
 
 function isMobileLike(){
@@ -293,8 +391,8 @@ function applyMobileLineSafety(){
 }
 
 async function logout(){
-  if (isLiffMode()) {
-    try { if (window.liff && window.liff.isLoggedIn()) window.liff.logout(); } catch(e) {}
+  if (isLocalMode()) {
+    try { if (isLiffMode() && window.liff && window.liff.isLoggedIn()) window.liff.logout(); } catch(e) {}
     authMode = "firebase"; user = null; state = null;
     $("appView").classList.add("hidden"); $("loginView").classList.remove("hidden");
     return;
@@ -302,6 +400,6 @@ async function logout(){
   await signOut(auth);
 }
 function switchPage(page){document.querySelectorAll(".nav,.mobile-nav-item").forEach(x=>x.classList.toggle("active",x.dataset.page===page));document.querySelectorAll(".page").forEach(x=>x.classList.remove("active-page"));$(page).classList.add("active-page");$("pageTitle").textContent=pageTitles[page]||page;renderCharts();document.querySelector(".content")?.scrollTo?.({top:0,behavior:"smooth"});window.scrollTo({top:0,behavior:"smooth"})}
-function bind(){document.querySelectorAll(".nav,.mobile-nav-item").forEach(button=>{button.onclick=()=>switchPage(button.dataset.page)});$("lineLoginBtn").onclick=()=>{ if(isMobileLike()) return handleLiffLogin(); return signInWithPopup(auth,lineProvider); };$("googleLoginBtn").onclick=()=>signInWithPopup(auth,provider);$("linkLineBtn").onclick=()=>{ if(isMobileLike()) return alert("手機版目前使用 LINE 登入，帳號連結請先在桌機版操作。"); return linkProvider(lineProvider,"LINE"); };$("linkGoogleBtn").onclick=()=>linkProvider(provider,"Google");$("logoutBtn").onclick=()=>logout();if($("mobileLogoutBtn"))$("mobileLogoutBtn").onclick=()=>logout();$("saveBtn").onclick=async()=>{await saveData();alert("已同步到 Firestore")};$("addAssetBtn").onclick=()=>add("asset");$("addLiabilityBtn").onclick=()=>add("liability");$("addInvestmentBtn").onclick=()=>add("investment");$("addIncomeBtn").onclick=()=>add("income");$("addExpenseBtn").onclick=()=>add("expense");$("addJournalBtn").onclick=()=>add("journal");$("snapshotBtn").onclick=recordMonthlySnapshot;$("exportBtn").onclick=exportData;$("importBtn").onclick=()=>$("importFile").click();$("importFile").onchange=importData;$("editForm").onsubmit=submitEdit;$("deleteDialogBtn").onclick=deleteEditingItem;$("fireGoalInput").oninput=e=>{state.fire.goal=raw(e.target.value);e.target.value=nf(state.fire.goal);renderAll();saveData()};$("monthlyInvestInput").oninput=e=>{state.fire.monthlyInvestment=raw(e.target.value);e.target.value=nf(state.fire.monthlyInvestment);renderAll();saveData()};$("returnInput").oninput=e=>{state.fire.annualReturn=raw(e.target.value);renderAll();saveData()};$("displayNameInput").oninput=e=>{state.settings.displayName=e.target.value;renderUser();saveData()};$("emergencyMonthsInput").oninput=e=>{state.settings.emergencyMonths=raw(e.target.value);renderAI();saveData()};$("resetDemoBtn").onclick=async()=>{if(confirm("確定重置成示範資料？目前資料會被覆蓋。")){state=clone(defaultData);state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};await saveAndRender()}}}
+function bind(){document.querySelectorAll(".nav,.mobile-nav-item").forEach(button=>{button.onclick=()=>switchPage(button.dataset.page)});$("lineLoginBtn").onclick=()=>{ if(isMobileLike()) return handleLiffLogin(); return signInWithPopup(auth,lineProvider); };$("googleLoginBtn").onclick=()=>signInWithPopup(auth,provider);if($("guestExperienceBtn"))$("guestExperienceBtn").onclick=()=>startGuestExperience();if($("onboardingNextBtn"))$("onboardingNextBtn").onclick=()=>nextOnboarding();if($("onboardingBackBtn"))$("onboardingBackBtn").onclick=()=>prevOnboarding();$("linkLineBtn").onclick=()=>{ if(isMobileLike()) return alert("手機版目前使用 LINE 登入，帳號連結請先在桌機版操作。"); return linkProvider(lineProvider,"LINE"); };$("linkGoogleBtn").onclick=()=>linkProvider(provider,"Google");$("logoutBtn").onclick=()=>logout();if($("mobileLogoutBtn"))$("mobileLogoutBtn").onclick=()=>logout();$("saveBtn").onclick=async()=>{await saveData();alert("已同步到 Firestore")};$("addAssetBtn").onclick=()=>add("asset");$("addLiabilityBtn").onclick=()=>add("liability");$("addInvestmentBtn").onclick=()=>add("investment");$("addIncomeBtn").onclick=()=>add("income");$("addExpenseBtn").onclick=()=>add("expense");$("addJournalBtn").onclick=()=>add("journal");$("snapshotBtn").onclick=recordMonthlySnapshot;$("exportBtn").onclick=exportData;$("importBtn").onclick=()=>$("importFile").click();$("importFile").onchange=importData;$("editForm").onsubmit=submitEdit;$("deleteDialogBtn").onclick=deleteEditingItem;$("fireGoalInput").oninput=e=>{state.fire.goal=raw(e.target.value);e.target.value=nf(state.fire.goal);renderAll();saveData()};$("monthlyInvestInput").oninput=e=>{state.fire.monthlyInvestment=raw(e.target.value);e.target.value=nf(state.fire.monthlyInvestment);renderAll();saveData()};$("returnInput").oninput=e=>{state.fire.annualReturn=raw(e.target.value);renderAll();saveData()};$("displayNameInput").oninput=e=>{state.settings.displayName=e.target.value;renderUser();saveData()};$("emergencyMonthsInput").oninput=e=>{state.settings.emergencyMonths=raw(e.target.value);renderAI();saveData()};$("resetDemoBtn").onclick=async()=>{if(confirm("確定重置成示範資料？目前資料會被覆蓋。")){state=clone(defaultData);state.profile={uid:user.uid,email:user.email,name:user.displayName,photo:user.photoURL};await saveAndRender()}}}
 setDailyQuote();bind();setupPWA();applyMobileLineSafety();
 onAuthStateChanged(auth,async currentUser=>{if(isLiffMode())return;user=currentUser;if(currentUser){authMode="firebase";$("loginView").classList.add("hidden");$("appView").classList.remove("hidden");await loadData()}else{$("loginView").classList.remove("hidden");$("appView").classList.add("hidden")}});

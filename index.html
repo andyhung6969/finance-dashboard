@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FIRE OS 2.6.8</title>
+  <title>FIRE OS 3.0.1</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="assets/css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -20,15 +20,16 @@
         <button id="googleLoginBtn" class="primary-btn secondary-login">使用 Google 登入</button>
       </div>
       <div class="login-footer">
-        <div class="login-version">v2.6.8</div>
+        <div class="login-version">v3.0.1</div>
         <div class="login-crafted">Crafted by 洪彥安</div>
+        <button id="guestExperienceBtn" class="guest-link" type="button">先體驗 FIRE OS →</button>
       </div>
     </div>
   </section>
 
   <main id="appView" class="app hidden">
     <aside class="sidebar glass desktop-only">
-      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>2.6.8</small></div>
+      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>3.0.1</small></div>
       <nav class="desktop-nav">
         <button class="nav active" data-page="dashboard">🏠 首頁</button>
         <button class="nav" data-page="assets">💰 Assets</button>
@@ -155,6 +156,17 @@
       <button class="mobile-nav-item" data-page="settings"><span>⚙️</span><small>設定</small></button>
     </nav>
   </main>
+
+  <section id="onboardingView" class="onboarding-shell hidden" aria-live="polite">
+    <div class="onboarding-card glass">
+      <div class="onboarding-progress"><i id="onboardingProgress"></i></div>
+      <div id="onboardingContent"></div>
+      <div class="onboarding-actions">
+        <button id="onboardingBackBtn" class="ghost-btn" type="button">返回</button>
+        <button id="onboardingNextBtn" class="primary-btn" type="button">下一步</button>
+      </div>
+    </div>
+  </section>
 
   <dialog id="editDialog" class="glass dialog">
     <form method="dialog" id="editForm">
