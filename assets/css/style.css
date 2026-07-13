@@ -298,3 +298,41 @@
 @keyframes journeyTipIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes miniWave{0%{opacity:0;transform:translateX(-8px) scale(.9)}60%{opacity:1;transform:translateX(0) scale(1.08)}100%{opacity:1;transform:translateX(0) scale(1)}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition:none!important}}
+
+/* FIRE OS 3.0.7a - Replay animations whenever a page is revisited */
+.page.page-replay{animation:pageReplayIn .34s cubic-bezier(.2,.8,.2,1) both}
+.page.page-replay .motion-replay{animation:cardReplayIn .48s cubic-bezier(.2,.8,.2,1) both}
+.page.page-replay .hero.motion-replay{animation:heroReplayIn .56s cubic-bezier(.16,.95,.26,1) both}
+.page.page-replay .kpi-grid .card:nth-child(1),
+.page.page-replay .journey-stats div:nth-child(1),
+.page.page-replay .list .item:nth-child(1),
+.page.page-replay .timeline-item:nth-child(1),
+.page.page-replay .insight:nth-child(1){animation-delay:.04s}
+.page.page-replay .kpi-grid .card:nth-child(2),
+.page.page-replay .journey-stats div:nth-child(2),
+.page.page-replay .list .item:nth-child(2),
+.page.page-replay .timeline-item:nth-child(2),
+.page.page-replay .insight:nth-child(2){animation-delay:.10s}
+.page.page-replay .kpi-grid .card:nth-child(3),
+.page.page-replay .journey-stats div:nth-child(3),
+.page.page-replay .list .item:nth-child(3),
+.page.page-replay .timeline-item:nth-child(3),
+.page.page-replay .insight:nth-child(3){animation-delay:.16s}
+.page.page-replay .kpi-grid .card:nth-child(4),
+.page.page-replay .journey-stats div:nth-child(4),
+.page.page-replay .list .item:nth-child(4),
+.page.page-replay .timeline-item:nth-child(4),
+.page.page-replay .insight:nth-child(4){animation-delay:.22s}
+.page.page-replay .asset-chart-card.motion-replay{animation:chartReplayIn .62s cubic-bezier(.18,.89,.28,1.12) both}
+.page.page-replay .asset-legend-row{animation:legendReplayIn .42s ease both}
+.page.page-replay .asset-legend-row:nth-child(1){animation-delay:.10s}
+.page.page-replay .asset-legend-row:nth-child(2){animation-delay:.16s}
+.page.page-replay .asset-legend-row:nth-child(3){animation-delay:.22s}
+.page.page-replay .asset-legend-row:nth-child(4){animation-delay:.28s}
+.page.page-replay .asset-legend-row:nth-child(n+5){animation-delay:.34s}
+.page.page-replay .progress i{transition:width .85s cubic-bezier(.2,.8,.2,1)}
+@keyframes pageReplayIn{from{opacity:.001;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes cardReplayIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes heroReplayIn{from{opacity:0;transform:translateY(16px) scale(.975);filter:blur(2px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+@keyframes chartReplayIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes legendReplayIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
