@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FIRE OS 3.0.6</title>
+  <title>FIRE OS 3.0.6a</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="assets/css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -20,7 +20,7 @@
         <button id="googleLoginBtn" class="primary-btn secondary-login">使用 Google 登入</button>
       </div>
       <div class="login-footer">
-        <div class="login-version">v3.0.6</div>
+        <div class="login-version">v3.0.6a</div>
         <div class="login-crafted">Crafted by 洪彥安</div>
         <button id="guestExperienceBtn" class="guest-link" type="button">先體驗 FIRE OS →</button>
       </div>
@@ -29,7 +29,7 @@
 
   <main id="appView" class="app hidden">
     <aside class="sidebar glass desktop-only">
-      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>3.0.6</small></div>
+      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>3.0.6a</small></div>
       <nav class="desktop-nav">
         <button class="nav active" data-page="dashboard">🏠 首頁</button>
         <button class="nav" data-page="assets">💰 Assets</button>
@@ -40,11 +40,17 @@
         <button class="nav" data-page="ai">🤖 AI Coach</button>
         <button class="nav" data-page="settings">⚙️ 設定</button>
       </nav>
-      <div class="profile-mini">
-        <img id="userPhoto" alt="user" />
-        <div><strong id="userName">User</strong><span id="userEmail"></span></div>
+      <div class="sidebar-status">
+        <p>市場會波動，<br>紀律不該波動。</p>
+        <div class="sidebar-page-pill" id="sidebarPageTitle">🏠 首頁</div>
       </div>
-      <button id="logoutBtn" class="ghost-btn">登出</button>
+      <div class="sidebar-bottom">
+        <div class="profile-mini">
+          <img id="userPhoto" alt="user" />
+          <div><strong id="userName">User</strong><span id="userEmail"></span></div>
+        </div>
+        <button id="logoutBtn" class="ghost-btn logout-desktop">🚪 登出</button>
+      </div>
     </aside>
 
     <section class="content">
