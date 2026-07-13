@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FIRE OS 3.0.3</title>
+  <title>FIRE OS 3.0.6</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="assets/css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -20,7 +20,7 @@
         <button id="googleLoginBtn" class="primary-btn secondary-login">使用 Google 登入</button>
       </div>
       <div class="login-footer">
-        <div class="login-version">v3.0.3</div>
+        <div class="login-version">v3.0.6</div>
         <div class="login-crafted">Crafted by 洪彥安</div>
         <button id="guestExperienceBtn" class="guest-link" type="button">先體驗 FIRE OS →</button>
       </div>
@@ -29,7 +29,7 @@
 
   <main id="appView" class="app hidden">
     <aside class="sidebar glass desktop-only">
-      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>3.0.3</small></div>
+      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>3.0.6</small></div>
       <nav class="desktop-nav">
         <button class="nav active" data-page="dashboard">🏠 首頁</button>
         <button class="nav" data-page="assets">💰 Assets</button>
@@ -80,7 +80,28 @@
             </div>
             <div class="asset-card-footer"><span>ⓘ 資料來源：你的帳戶與資產資料</span><span id="assetUpdatedAt">最後更新：剛剛</span></div>
           </div>
-          <div class="card glass networth-chart-card"><h3>淨資產趨勢</h3><canvas id="netWorthChart"></canvas></div>
+          <div class="card glass fire-journey-card">
+            <div class="fire-journey-head">
+              <div>
+                <p class="fire-journey-kicker">🎯 FIRE Journey</p>
+                <h3>距離財務自由只剩一步！</h3>
+              </div>
+              <div class="fire-goal-mini"><span>目標金額</span><strong id="journeyGoal">NT$0</strong></div>
+            </div>
+            <div class="fire-journey-body">
+              <div class="journey-ring" id="journeyRing"><span id="journeyPercent">0%</span><small>已完成</small></div>
+              <div class="journey-stats">
+                <div><span>目前淨資產</span><strong id="journeyCurrent" class="positive">NT$0</strong></div>
+                <div><span>距離目標還差</span><strong id="journeyRemain" class="gold">NT$0</strong></div>
+                <div><span>預估達成時間</span><strong id="journeyEta" class="blue">--</strong></div>
+                <div><span>依目前速度還需</span><strong id="journeyYears">--</strong></div>
+              </div>
+            </div>
+            <div class="journey-tip">
+              <div><span>🚀</span><strong>如果每月多投資 NT$20,000</strong><br><small>可提前約 11 個月達成 FIRE！</small></div>
+              <div class="mini-growth">⌁⌁↗</div>
+            </div>
+          </div>
         </div>
       </section>
 
