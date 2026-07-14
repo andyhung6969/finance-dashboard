@@ -299,40 +299,16 @@
 @keyframes miniWave{0%{opacity:0;transform:translateX(-8px) scale(.9)}60%{opacity:1;transform:translateX(0) scale(1.08)}100%{opacity:1;transform:translateX(0) scale(1)}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition:none!important}}
 
-/* FIRE OS 3.0.7a - Replay animations whenever a page is revisited */
-.page.page-replay{animation:pageReplayIn .34s cubic-bezier(.2,.8,.2,1) both}
-.page.page-replay .motion-replay{animation:cardReplayIn .48s cubic-bezier(.2,.8,.2,1) both}
-.page.page-replay .hero.motion-replay{animation:heroReplayIn .56s cubic-bezier(.16,.95,.26,1) both}
-.page.page-replay .kpi-grid .card:nth-child(1),
-.page.page-replay .journey-stats div:nth-child(1),
-.page.page-replay .list .item:nth-child(1),
-.page.page-replay .timeline-item:nth-child(1),
-.page.page-replay .insight:nth-child(1){animation-delay:.04s}
-.page.page-replay .kpi-grid .card:nth-child(2),
-.page.page-replay .journey-stats div:nth-child(2),
-.page.page-replay .list .item:nth-child(2),
-.page.page-replay .timeline-item:nth-child(2),
-.page.page-replay .insight:nth-child(2){animation-delay:.10s}
-.page.page-replay .kpi-grid .card:nth-child(3),
-.page.page-replay .journey-stats div:nth-child(3),
-.page.page-replay .list .item:nth-child(3),
-.page.page-replay .timeline-item:nth-child(3),
-.page.page-replay .insight:nth-child(3){animation-delay:.16s}
-.page.page-replay .kpi-grid .card:nth-child(4),
-.page.page-replay .journey-stats div:nth-child(4),
-.page.page-replay .list .item:nth-child(4),
-.page.page-replay .timeline-item:nth-child(4),
-.page.page-replay .insight:nth-child(4){animation-delay:.22s}
-.page.page-replay .asset-chart-card.motion-replay{animation:chartReplayIn .62s cubic-bezier(.18,.89,.28,1.12) both}
-.page.page-replay .asset-legend-row{animation:legendReplayIn .42s ease both}
-.page.page-replay .asset-legend-row:nth-child(1){animation-delay:.10s}
-.page.page-replay .asset-legend-row:nth-child(2){animation-delay:.16s}
-.page.page-replay .asset-legend-row:nth-child(3){animation-delay:.22s}
-.page.page-replay .asset-legend-row:nth-child(4){animation-delay:.28s}
-.page.page-replay .asset-legend-row:nth-child(n+5){animation-delay:.34s}
-.page.page-replay .progress i{transition:width .85s cubic-bezier(.2,.8,.2,1)}
-@keyframes pageReplayIn{from{opacity:.001;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-@keyframes cardReplayIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes heroReplayIn{from{opacity:0;transform:translateY(16px) scale(.975);filter:blur(2px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
-@keyframes chartReplayIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes legendReplayIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
+
+/* FIRE OS 3.0.8 - Mobile Avatar + Desktop Scroll Logout */
+.mobile-profile-head{display:flex;align-items:center;gap:12px;min-width:0}
+#mobileUserPhoto{width:42px;height:42px;border-radius:50%;object-fit:cover;flex:0 0 auto;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.20);box-shadow:0 10px 26px rgba(0,0,0,.20),0 0 0 4px rgba(39,229,143,.06)}
+.mobile-profile-head>div{min-width:0}.mobile-profile-head h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (min-width:961px){
+  .desktop-scroll-logout{position:fixed;right:24px;top:22px;z-index:150;width:auto!important;min-width:104px;padding:11px 17px!important;opacity:0;pointer-events:none;transform:translateY(-12px) scale(.96);background:rgba(255,92,120,.12)!important;border:1px solid rgba(255,92,120,.42)!important;color:#ff9bad!important;box-shadow:0 18px 48px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.08);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);transition:opacity .22s ease,transform .22s ease,background .18s ease,color .18s ease,box-shadow .18s ease!important}
+  .desktop-scroll-logout.is-visible{opacity:1;pointer-events:auto;transform:translateY(0) scale(1)}
+  .desktop-scroll-logout:hover{background:rgba(255,92,120,.92)!important;color:#fff!important;box-shadow:0 22px 58px rgba(255,92,120,.22),0 18px 50px rgba(0,0,0,.18)!important}
+}
+@media (max-width:960px){
+  .mobile-topbar{gap:12px}.top-actions{flex:0 0 auto}.mobile-profile-head{flex:1}.mobile-profile-head .eyebrow{max-width:52vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}

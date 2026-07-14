@@ -29,7 +29,7 @@
 
   <main id="appView" class="app hidden">
     <aside class="sidebar glass desktop-only">
-      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>3.0.7</small></div>
+      <div class="brand"><span>🔥</span><strong>FIRE OS</strong><small>3.0.8</small></div>
       <nav class="desktop-nav">
         <button class="nav active" data-page="dashboard">🏠 首頁</button>
         <button class="nav" data-page="assets">💰 Assets</button>
@@ -49,13 +49,16 @@
           <img id="userPhoto" alt="user" />
           <div><strong id="userName">User</strong><span id="userEmail"></span></div>
         </div>
-        <button id="logoutBtn" class="ghost-btn logout-desktop">🚪 登出</button>
+        <button id="logoutBtn" class="ghost-btn logout-desktop desktop-scroll-logout">🚪 登出</button>
       </div>
     </aside>
 
     <section class="content">
       <header class="topbar glass mobile-topbar">
-        <div><p id="greeting" class="eyebrow">財務的累積，需要時間。</p><h1 id="pageTitle">首頁</h1></div>
+        <div class="mobile-profile-head">
+          <img id="mobileUserPhoto" alt="user" />
+          <div><p id="greeting" class="eyebrow">財務的累積，需要時間。</p><h1 id="pageTitle">首頁</h1></div>
+        </div>
         <div class="top-actions">
           <button id="installBtn" class="ghost-btn small hidden">安裝 App</button>
           <button id="mobileLogoutBtn" class="ghost-btn small mobile-only" type="button">登出</button>
