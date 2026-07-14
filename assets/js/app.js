@@ -428,7 +428,25 @@ async function logout(){
   }
   await signOut(auth);
 }
-function switchPage(page){document.querySelectorAll(".nav,.mobile-nav-item").forEach(x=>x.classList.toggle("active",x.dataset.page===page));document.querySelectorAll(".page").forEach(x=>x.classList.remove("active-page"));$(page).classList.add("active-page");$("pageTitle").textContent=pageTitles[page]||page;if($("sidebarPageTitle"))$("sidebarPageTitle").textContent=(page==="dashboard"?"🏠 ":"")+(pageTitles[page]||page);renderCharts();document.querySelector(".content")?.scrollTo?.({top:0,behavior:"smooth"});window.scrollTo({top:0,behavior:"smooth"})}
+function replayPageMotion(page){
+  const el=$(page);
+  if(!el)return;
+  el.classList.remove("page-replay","mobile-home-replay");
+  void el.offsetWidth;
+  el.classList.add("page-replay");
+  if(page==="dashboard"){
+    el.classList.add("mobile-home-replay");
+    ["netWorthHero","kpiAssets","kpiDebt","kpiCashflow","journeyCurrent","journeyRemain"].forEach(id=>{const node=$(id);if(node)node.dataset.value=0});
+    const mainRing=document.querySelector(".ring");
+    if(mainRing){mainRing.dataset.percent=0;mainRing.style.setProperty("--p","0%")}
+    if($("fireRing"))$("fireRing").textContent="0%";
+    const journeyRing=$("journeyRing");
+    if(journeyRing){journeyRing.dataset.percent=0;journeyRing.style.setProperty("--p","0%")}
+    if($("journeyPercent"))$("journeyPercent").textContent="0%";
+    renderDashboard();
+  }
+}
+function switchPage(page){document.querySelectorAll(".nav,.mobile-nav-item").forEach(x=>x.classList.toggle("active",x.dataset.page===page));document.querySelectorAll(".page").forEach(x=>{x.classList.remove("active-page","page-replay","mobile-home-replay")});$(page).classList.add("active-page");$("pageTitle").textContent=pageTitles[page]||page;if($("sidebarPageTitle"))$("sidebarPageTitle").textContent=(page==="dashboard"?"🏠 ":"")+(pageTitles[page]||page);renderCharts();replayPageMotion(page);document.querySelector(".content")?.scrollTo?.({top:0,behavior:"smooth"});window.scrollTo({top:0,behavior:"smooth"})}
 function updateDesktopLogoutVisibility(){
   const btn = $("logoutBtn");
   if(!btn) return;

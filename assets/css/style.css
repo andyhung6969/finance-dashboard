@@ -371,3 +371,43 @@
   .profile-logout-link:hover{color:var(--green);text-shadow:0 0 18px rgba(39,229,143,.28);transform:translateX(1px);}
 }
 @media (max-width:960px){.profile-logout-link{display:none!important;}}
+
+
+/* 3.0.8 UI Freeze: replay mobile home animation every time user returns to Home */
+.page.page-replay{animation:none;}
+.page.page-replay.active-page{animation:fadeSlide .28s cubic-bezier(.2,.8,.2,1) both;}
+@media (max-width:960px){
+  #dashboard.mobile-home-replay .hero,
+  #dashboard.mobile-home-replay .kpi-grid .card,
+  #dashboard.mobile-home-replay .dashboard-charts .card{
+    animation:mobileHomeCardReplay .58s cubic-bezier(.18,.9,.22,1) both;
+  }
+  #dashboard.mobile-home-replay .hero{animation-delay:.02s;}
+  #dashboard.mobile-home-replay .kpi-grid .card:nth-child(1){animation-delay:.08s;}
+  #dashboard.mobile-home-replay .kpi-grid .card:nth-child(2){animation-delay:.13s;}
+  #dashboard.mobile-home-replay .kpi-grid .card:nth-child(3){animation-delay:.18s;}
+  #dashboard.mobile-home-replay .kpi-grid .card:nth-child(4){animation-delay:.23s;}
+  #dashboard.mobile-home-replay .dashboard-charts .card:nth-child(1){animation-delay:.28s;}
+  #dashboard.mobile-home-replay .dashboard-charts .card:nth-child(2){animation-delay:.33s;}
+  #dashboard.mobile-home-replay .ring,
+  #dashboard.mobile-home-replay .journey-ring{
+    animation:mobileHomeRingPop .72s cubic-bezier(.2,.9,.2,1) both;
+  }
+}
+@keyframes mobileHomeCardReplay{
+  from{opacity:0;transform:translateY(18px) scale(.985);filter:blur(3px);}
+  to{opacity:1;transform:translateY(0) scale(1);filter:blur(0);}
+}
+@keyframes mobileHomeRingPop{
+  0%{transform:scale(.88);opacity:.45;}
+  72%{transform:scale(1.035);opacity:1;}
+  100%{transform:scale(1);opacity:1;}
+}
+@media (prefers-reduced-motion:reduce){
+  .page.page-replay.active-page,
+  #dashboard.mobile-home-replay .hero,
+  #dashboard.mobile-home-replay .kpi-grid .card,
+  #dashboard.mobile-home-replay .dashboard-charts .card,
+  #dashboard.mobile-home-replay .ring,
+  #dashboard.mobile-home-replay .journey-ring{animation:none!important;}
+}
