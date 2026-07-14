@@ -12,3 +12,5 @@ Updates:
 Version: 3.0.8
 Build: x9681
 Crafted by Andy Hung
+
+- Profile card logout is now a compact text action on the right side.

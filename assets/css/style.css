@@ -337,3 +337,37 @@
 .about-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-top:1px solid rgba(255,255,255,.10)}
 .about-row span{color:var(--muted);font-size:13px}.about-row strong{font-size:14px;text-align:right}.brand{letter-spacing:.01em}.brand small{display:none!important}
 @media (min-width:961px){.brand{display:flex!important;grid-template-columns:none!important;align-items:center!important;gap:10px!important}.brand>span{grid-row:auto!important;font-size:28px!important}.brand>strong{grid-column:auto!important;font-size:22px!important;line-height:1!important;overflow:visible!important}.sidebar-bottom{gap:12px}}
+
+
+/* FIRE OS 3.0.8 UI Freeze - Profile card logout refinement */
+@media (min-width:961px){
+  .sidebar-bottom{gap:0!important;}
+  .profile-mini{
+    display:grid!important;
+    grid-template-columns:42px minmax(0,1fr) auto;
+    align-items:center;
+    column-gap:10px;
+    padding:14px 14px!important;
+    min-height:72px;
+  }
+  .profile-mini img{grid-column:1;grid-row:1 / span 2;}
+  .profile-mini-copy{grid-column:2;grid-row:1 / span 2;min-width:0;}
+  .profile-mini-copy strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:19px;line-height:1.12;}
+  .profile-mini-copy span{display:block;max-width:100%!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;line-height:1.35;margin-top:3px;}
+  .profile-logout-link{
+    grid-column:3;grid-row:1;
+    align-self:start;
+    border:0;
+    background:transparent;
+    color:rgba(234,242,255,.78);
+    font-weight:900;
+    font-size:13px;
+    padding:2px 0 4px;
+    border-radius:0;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:color .18s ease,text-shadow .18s ease,transform .18s ease;
+  }
+  .profile-logout-link:hover{color:var(--green);text-shadow:0 0 18px rgba(39,229,143,.28);transform:translateX(1px);}
+}
+@media (max-width:960px){.profile-logout-link{display:none!important;}}
