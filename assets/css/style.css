@@ -312,3 +312,20 @@
 @media (max-width:960px){
   .mobile-topbar{gap:12px}.top-actions{flex:0 0 auto}.mobile-profile-head{flex:1}.mobile-profile-head .eyebrow{max-width:52vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 }
+
+
+/* FIRE OS 3.0.8 x9681 - Header spacing fix */
+@media (min-width:961px){
+  .brand{display:grid!important;grid-template-columns:auto minmax(0,1fr);column-gap:10px;row-gap:2px;align-items:center;min-width:0;}
+  .brand>span{grid-row:1 / span 2;font-size:28px;line-height:1;}
+  .brand>strong{grid-column:2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.05;}
+  .brand>small{grid-column:2;display:block;margin-left:0!important;font-size:12px;line-height:1.1;color:rgba(141,162,189,.95);}
+  .desktop-scroll-logout{top:auto!important;right:24px!important;bottom:24px!important;border-radius:999px!important;min-width:112px!important;}
+  .desktop-scroll-logout.is-visible{transform:translateY(0) scale(1)!important;}
+  .content{padding-right:10px;}
+}
+@media (max-width:960px){
+  .mobile-topbar{align-items:center;overflow:hidden;}
+  #mobileUserPhoto{width:44px;height:44px;}
+  .mobile-profile-head h1{font-size:25px;}
+}
