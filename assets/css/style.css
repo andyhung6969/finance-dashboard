@@ -329,3 +329,11 @@
   #mobileUserPhoto{width:44px;height:44px;}
   .mobile-profile-head h1{font-size:25px;}
 }
+
+
+/* FIRE OS 3.0.8 Premium Motion UI Freeze - version moved to Settings */
+.about-fire-os{margin-top:22px;padding:18px;border-radius:22px;background:rgba(255,255,255,.065);border:1px solid rgba(255,255,255,.12);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.about-kicker{margin:0 0 12px!important;color:var(--text)!important;font-weight:900;letter-spacing:.04em}
+.about-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-top:1px solid rgba(255,255,255,.10)}
+.about-row span{color:var(--muted);font-size:13px}.about-row strong{font-size:14px;text-align:right}.brand{letter-spacing:.01em}.brand small{display:none!important}
+@media (min-width:961px){.brand{display:flex!important;grid-template-columns:none!important;align-items:center!important;gap:10px!important}.brand>span{grid-row:auto!important;font-size:28px!important}.brand>strong{grid-column:auto!important;font-size:22px!important;line-height:1!important;overflow:visible!important}.sidebar-bottom{gap:12px}}
